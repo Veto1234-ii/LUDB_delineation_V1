@@ -8,7 +8,7 @@ import json
 
 
 if __name__ == "__main__":
-    from visualisations import BinaryDatasetVis
+    from visualisations import UIBinaryDataset
 
     # Открываем LUDB
     path_to_dataset = Path(PATH_TO_LUDB)
@@ -31,4 +31,4 @@ if __name__ == "__main__":
     binary_dataset = load_binary_dataset_from_file(name=name)
 
     # Листаем его в UI с визуализацией картинок
-    binary_dataset_visualizator = BinaryDatasetVis(binary_dataset)
+    binary_dataset_visualizator = UIBinaryDataset(binary_dataset)

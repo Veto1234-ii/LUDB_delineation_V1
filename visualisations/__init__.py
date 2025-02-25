@@ -1,1 +1,1 @@
-from UI_binary_dataset import BinaryDatasetVis
+from UI_binary_dataset import UIBinaryDataset
