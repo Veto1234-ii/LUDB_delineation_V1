@@ -8,7 +8,7 @@ import json
 
 
 if __name__ == "__main__":
-    from visualisations import UIBinaryDataset
+    from visualisation import UIBinaryDataset
 
     # Открываем LUDB
     path_to_dataset = Path(PATH_TO_LUDB)
