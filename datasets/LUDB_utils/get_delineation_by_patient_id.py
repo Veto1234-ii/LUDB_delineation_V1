@@ -1,6 +1,6 @@
 from settings import LEADS_NAMES, POINTS, WAVES_TYPES
 
-def get_one_lead_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.i, point_type=POINTS.QRS_PEAK):
+def get_one_lead_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.iii, point_type=POINTS.P_START):
     """ Для данного пациента получить координаты точек такого-то типа в таком-то отведении. """
     result_coords = []
 

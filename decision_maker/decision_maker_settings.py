@@ -5,7 +5,7 @@ class DecisionMakerColors:
         self.QRS_START = '#6225081'
 
         self.T_START = '#71234255'
-        self.T_END = '# 60196214'
+        self.T_END = '#60196214'
         self.T_PEAK = '#37126138'
 
         self.P_END = '#71234255'

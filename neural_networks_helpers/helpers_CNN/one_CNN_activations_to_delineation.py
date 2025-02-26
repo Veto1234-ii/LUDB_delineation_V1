@@ -1,5 +1,9 @@
 
-def get_delination_from_activation(threshold, activations):
+def get_delineation_from_activation_by_mean(threshold, activations):
+    # TODO
+    return delineation
+
+def get_delineation_from_activation_by_max(threshold, activations):
     # TODO
     return delineation
 

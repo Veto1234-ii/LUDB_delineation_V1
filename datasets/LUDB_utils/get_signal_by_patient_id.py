@@ -28,7 +28,7 @@ if __name__ == "__main__":
     from get_LUDB_data import get_LUDB_data
 
     patient_id = get_some_test_patient_id()
-    lead_name = LEADS_NAMES.i
+    lead_name = LEADS_NAMES.v4
     LUDB_data = get_LUDB_data()
 
     # сигнал данного пациента в милливотльтах в данном отведении
