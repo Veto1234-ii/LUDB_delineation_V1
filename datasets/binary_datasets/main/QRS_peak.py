@@ -1,4 +1,4 @@
-from binary_dataset import BinaryDataset
+from binary_datasets import BinaryDataset
 from binary_dataset_creator import create_dataset_from_scratch
 from serialization import save_binary_dataset_to_file, load_binary_dataset_from_file
 from settings import POINTS, LEADS_NAMES, PATH_TO_LUDB
@@ -8,7 +8,7 @@ import json
 
 
 if __name__ == "__main__":
-    from visualisation import UIBinaryDataset
+    from datasets.GUI import UIBinaryDataset
 
     # Открываем LUDB
     path_to_dataset = Path(PATH_TO_LUDB)

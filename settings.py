@@ -2,7 +2,7 @@ from enum import Enum
 
 PATH_TO_LUDB = 'LUDB\\ecg_data_200.json'
 
-class LEADS_NAMES:
+class LeadsNames:
     def __init__(self):
         self.i='i'
         self.ii='ii'
@@ -16,6 +16,7 @@ class LEADS_NAMES:
         self.v4='v4'
         self.v5='v5'
         self.v6='v6'
+LEADS_NAMES = LeadsNames()
 
 LEADS_NAMES_ORDERED = ['i', 'ii', 'iii', 'avr', 'avl', 'avf', 'v1', 'v2', 'v3', 'v4', 'v5', 'v6']
 
