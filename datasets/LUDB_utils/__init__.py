@@ -1,6 +1,6 @@
 from .train_test_patient_ids_split import get_test_and_train_ids
 from .get_some_test_patient_id import get_some_test_patient_id
 from .get_some_test_signal import get_some_test_signal
-from .get_signal_by_patient_id import get_all_signals_by_id, get_signal_by_id_and_lead
+from .get_signal_by_patient_id import *
 from .get_delineation_by_patient_id import get_one_lead_delineation_by_patient_id
 from .get_LUDB_data import get_LUDB_data

@@ -15,3 +15,4 @@ class ScenarioEntry:
     def draw_to_ax(self, ax):
         # TODO вызываем метод plot_one_lead_delineation из visualisation_utils
         # текст для лога в рисовании не участвует
+        pass

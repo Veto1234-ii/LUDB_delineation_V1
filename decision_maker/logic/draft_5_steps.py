@@ -1,5 +1,6 @@
 from decision_maker.GUI import Scenario, ScenarioEntry, GUI_ToShowScenario
-from neural_networks import CNN, get_appliable
+from neural_networks_models import CNN
+from neural_networks_helpers import get_appliable
 from settings import LEADS_NAMES, PATH_TO_LUDB
 
 class LogicDraft5:
@@ -44,7 +45,16 @@ class LogicDraft5:
         self.scenario_entryes_list.append(scneario_entry)
 
 if __name__ == "__main__":
-    signal = #получить сигнал
-    logic_draft = LogicDraft5(signal)
 
+    from decision_maker.GUI import GUI_ToShowScenario
+    from datasets.LUDB_utils import get_LUDB_data, get_some_test_patient_id, get_signals_by_id_several_leads_mkV
+
+    LUDB_data= get_LUDB_data()
+    patient_id=  get_some_test_patient_id
+    signals, leads_names = get_signals_by_id_several_leads_mkV(patient_id, LUDB_data, leads_names_list=[LEADS_NAMES.i, LEADS_NAMES.ii])
+
+    logic_draft = LogicDraft5(signals, leads_names=leads_names)
+    scenario = logic_draft.create_scenario()
+
+    gui = GUI_ToShowScenario(signals, leads_names, scenario)
 

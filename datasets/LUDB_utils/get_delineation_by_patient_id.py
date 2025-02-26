@@ -1,4 +1,4 @@
-from settings import LEADS_NAMES, POINTS
+from settings import LEADS_NAMES, POINTS, WAVES_TYPES
 
 def get_one_lead_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.i, point_type=POINTS.QRS_PEAK):
     """ Для данного пациента получить координаты точек такого-то типа в таком-то отведении. """
@@ -6,13 +6,13 @@ def get_one_lead_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEA
 
     wave = None
     if point_type in [POINTS.QRS_PEAK, POINTS.QRS_END, POINTS.QRS_START]:
-        wave = 'qrs'
+        wave = WAVES_TYPES.QRS
     else:
         if point_type in [POINTS.T_PEAK, POINTS.T_END, POINTS.T_START]:
-            wave = 't'
+            wave = WAVES_TYPES.T
         else:
             if point_type in [POINTS.P_PEAK, POINTS.P_END, POINTS.P_START]:
-                wave = 'p'
+                wave = WAVES_TYPES.P
 
     id_in_triplet = None
     if point_type in [POINTS.QRS_PEAK, POINTS.T_PEAK, POINTS.P_PEAK]:
@@ -30,6 +30,12 @@ def get_one_lead_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEA
 
     return result_coords
 
+def get_full_wave_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.i, wave=WAVES_TYPES.QRS):
+    # Возвразает список троек координат в конкретном отведении данного раицента.
+    # Каждая тройка соотв. [начало, пик, конец] волны заданного типа (например, QRS)
+    triplets  = LUDB_data[patient_id]['Leads'][lead_name]['Delineation'][wave]
+    triplets = [[triplets[i][0], triplets[i][1], triplets[i][2]] for i in range(len(triplets))]
+    return triplets
 
 if __name__ == "__main__":
     from get_LUDB_data import get_LUDB_data
@@ -38,5 +44,9 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
     patient_id =  get_some_test_patient_id()
 
-    delineation = get_one_lead_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.i, point_type=POINTS.QRS_PEAK)
-    print(delineation)
+    # координаты точек такого-то конкретного типа (например, пик QRS) в конкретном отведении данного раицента:
+    points_delineation = get_one_lead_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.i, point_type=POINTS.QRS_PEAK)
+    print(points_delineation)
+
+    wave_delineation = get_full_wave_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.i, wave=WAVES_TYPES.QRS)
+    print(wave_delineation)

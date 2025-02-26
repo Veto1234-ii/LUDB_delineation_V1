@@ -40,3 +40,11 @@ class POINTS(Enum):
     QRS_END = 9
 
 FREQUENCY = 500 # измерений в секунду
+
+class WavesTypes:
+    def __init__(self):
+        self.P = 'p'
+        self.QRS = 'qrs'
+        self.T = 't'
+
+WAVES_TYPES = WavesTypes()
