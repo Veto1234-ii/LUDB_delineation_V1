@@ -1,6 +1,6 @@
 from enum import Enum
 
-PATH_TO_LUDB = 'LUDB\\ecg_data_200.json'
+PATH_TO_LUDB = 'C:\\Users\\User\\PycharmProjects\\LUDB_delineation_V1\\LUDB\\ecg_data_200.json'
 
 class LeadsNames:
     def __init__(self):
