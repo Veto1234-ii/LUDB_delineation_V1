@@ -15,3 +15,4 @@ class DecisionMakerColors:
         self.SELECTED = 'black'
 
 DECISION_MAKER_COLORS = DecisionMakerColors()
+

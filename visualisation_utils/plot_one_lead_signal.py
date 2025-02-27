@@ -1,10 +1,10 @@
-from settings import FREQUENCY
+from settings import FREQUENCY, SIGNAL_LINEWIDTH, MINOR_GRID_LINEWIDTH, MAJOR_GRID_LINEWITH, SIGNAL_COLOR, GRID_COLOR
 
 import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-def plot_lead_signal_to_ax(signal_mV, ax, Y_max=None, Y_min=None, line_width = 1):
+def plot_lead_signal_to_ax(signal_mV, ax, Y_max=None, Y_min=None, line_width = SIGNAL_LINEWIDTH):
     if Y_max is None:
         Y_max = max(signal_mV) + 0.1
 
@@ -37,8 +37,8 @@ def plot_lead_signal_to_ax(signal_mV, ax, Y_max=None, Y_min=None, line_width = 1
     ax.set_yticks(np.arange(y_min, Y_max, cell_voltage_major))
 
     # Включаем сетки
-    ax.grid(True, which='minor', linestyle=':', linewidth=0.5, color='gray')
-    ax.grid(True, which='major', linestyle='-', linewidth=0.8, color='gray')
+    ax.grid(True, which='minor', linestyle='dashed', linewidth=MINOR_GRID_LINEWIDTH, color=GRID_COLOR)
+    ax.grid(True, which='major', linestyle='-', linewidth=MAJOR_GRID_LINEWITH, color=GRID_COLOR)
 
     # ограничиваем рисунок
     ax.set_xlim(_x_min, _x_max)
@@ -60,7 +60,8 @@ def plot_lead_signal_to_ax(signal_mV, ax, Y_max=None, Y_min=None, line_width = 1
     ax.plot(x, signal_mV,
             linestyle='-',  # Сплошная линия
             linewidth=line_width,  # Толщина линии
-            alpha=0.9,  # Полупрозрачная линия
+            alpha=0.6,  # Полупрозрачная линия
+            color = SIGNAL_COLOR
             #marker='o',  # Маркеры в виде кружков
             #markersize=line_width +0.1,  # Размер маркеров (диаметр кружков)
             #markerfacecolor='black',  # Цвет заливки маркеров

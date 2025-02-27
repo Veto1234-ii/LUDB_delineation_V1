@@ -48,3 +48,15 @@ class WavesTypes:
         self.T = 't'
 
 WAVES_TYPES = WavesTypes()
+
+#      НАСТРОЙКИ РИСОВАНИЯ
+
+# вертикальные линии разметки
+DELINEATION_LINEWIDTH = 0.9
+
+# рисование сигнала на миллиметровке:
+SIGNAL_LINEWIDTH = 1
+MINOR_GRID_LINEWIDTH = 0.2
+MAJOR_GRID_LINEWITH = 0.6
+SIGNAL_COLOR =  (0.1,0.3,0.5)
+GRID_COLOR = 'gray'

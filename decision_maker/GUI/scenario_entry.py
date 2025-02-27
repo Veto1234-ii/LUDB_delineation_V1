@@ -1,4 +1,4 @@
-from settings import LEADS_NAMES
+from settings import LEADS_NAMES, DELINEATION_LINEWIDTH
 from decision_maker.decision_maker_settings import DECISION_MAKER_COLORS
 from visualisation_utils import plot_one_lead_delineation_on_ax
 
