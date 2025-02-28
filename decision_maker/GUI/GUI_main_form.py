@@ -1,4 +1,4 @@
-from .scenario import Scenario
+from .drawing_scenario import Scenario
 from .scenario_entry import  ScenarioEntry
 
 class GUI_ToShowScenario:
@@ -7,10 +7,11 @@ class GUI_ToShowScenario:
         # TODO создаем GUI - форму с матлотлиб fig для отрисовки отведений и текстовое окошко для лога
         # Рисуем в картинку сигналы
         # привязываем self.on_next_step в кач-ве обработчика к событию "клик по стрелочке вправо на клаивтуре"
+        pass
 
 
     def draw_entry_in_GUI(self, scenario_entry):
-        ax= #TODO взяв имя отведения scenario_entry.lead_name, находим соотв. ему ax
+        ax= 0 #TODO взяв имя отведения scenario_entry.lead_name, находим соотв. ему ax
         scenario_entry.draw_to_ax(ax)
 
     def on_next_step(self):

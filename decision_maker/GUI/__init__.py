@@ -1,3 +1,3 @@
 from .scenario_entry import ScenarioEntry
-from .scenario import Scenario
-from .GUI_to_show_scenario import GUI_ToShowScenario
+from .drawing_scenario import Scenario
+from .GUI_main_form import GUI_ToShowScenario
