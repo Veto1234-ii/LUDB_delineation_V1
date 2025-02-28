@@ -1,16 +1,22 @@
+# Правило составления сценария отрисовки: то, что пользователь
+# должен видеть одновременно добавляется как группа. Перед отрисовкой
+# каждой следующей группы в GUI предудыщая стирается.
+#
+# Если требуется, чтоб, например, одно и то же облако активаций было сначала видно
+# (на первом шаге, к примеру), потом пять шагов не было видно, и на
+# шестом опять видно, то его надо добавить в две группы - в первую и шестую.
+
 class Scenario:
-    def __init__(self, scenario_entries_list):
-        self.scenario_entries_list = scenario_entries_list
-        self.scenario_steps = []
 
-    def add_step(self, indexes_list):
-        self.scenario_steps.append(indexes_list)
+    def __init__(self):
 
-    def __len__(self):
-        return len(self.scenario_steps)
+        self.i=-1
 
-    def get_entres_list_of_ith_step(self, i):
-        entryes_list= []
-        for index in self.scenario_steps[i]:
-            entryes_list.append(self.scenario_entries_list[index])
-        return entryes_list
+
+
+    def add_decision_results_group(self, decision_results):
+        pass
+
+    def get_next_to_draw(self):
+        self.i += 1
+        # вернуть текущую группу решений
