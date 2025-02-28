@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots()
     entry = ScenarioEntry(color_name=POINTS_TYPES_COLORS[point_type],
-                          coords_t=list([delineation[i]/FREQUENCY for i in range(len(delineation))]),
+                          coords_t=delineation,
                           lead_name=lead_name,
                           legend="пик QRS",
                           text_to_log="докторская разметка, например",

@@ -70,3 +70,25 @@ def plot_lead_signal_to_ax(signal_mV, ax, Y_max=None, Y_min=None, line_width = S
             )
 
 
+if __name__ == "__main__":
+    from settings import LEADS_NAMES,FREQUENCY
+    from datasets.LUDB_utils import get_some_test_patient_id, get_signal_by_id_and_lead_mV, get_LUDB_data
+    from visualisation_utils import plot_lead_signal_to_ax
+    import matplotlib.pyplot as plt
+
+    LUDB_data = get_LUDB_data()
+
+    patient_id = get_some_test_patient_id()
+
+    lead_name = LEADS_NAMES.i
+
+    signal_mV = get_signal_by_id_and_lead_mV(patient_id, lead_name=lead_name, LUDB_data=LUDB_data)
+
+
+    fig, ax = plt.subplots()
+    plot_lead_signal_to_ax(signal_mV=signal_mV, ax=ax)
+
+    ax.legend()
+    plt.show()
+
+

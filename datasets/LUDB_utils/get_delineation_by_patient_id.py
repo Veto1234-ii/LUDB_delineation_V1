@@ -1,4 +1,4 @@
-from settings import LEADS_NAMES, POINTS, WAVES_TYPES
+from settings import LEADS_NAMES, POINTS, WAVES_TYPES, FREQUENCY
 
 def get_one_lead_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.iii, point_type=POINTS.P_START):
     """ Для данного пациента получить координаты точек такого-то типа в таком-то отведении. """
@@ -28,13 +28,14 @@ def get_one_lead_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEA
     for triplet in points_triplets:
         result_coords.append(triplet[id_in_triplet])
 
+    result_coords = list([result_coords[i] / FREQUENCY for i in range(len(result_coords))])
     return result_coords
 
 def get_full_wave_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.i, wave=WAVES_TYPES.QRS):
     # Возвразает список троек координат в конкретном отведении данного раицента.
     # Каждая тройка соотв. [начало, пик, конец] волны заданного типа (например, QRS)
     triplets  = LUDB_data[patient_id]['Leads'][lead_name]['Delineation'][wave]
-    triplets = [[triplets[i][0], triplets[i][1], triplets[i][2]] for i in range(len(triplets))]
+    triplets = [[triplets[i][0]/ FREQUENCY, triplets[i][1]/ FREQUENCY, triplets[i][2]/ FREQUENCY] for i in range(len(triplets))]
     return triplets
 
 if __name__ == "__main__":
@@ -44,9 +45,10 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
     patient_id =  get_some_test_patient_id()
 
-    # координаты точек такого-то конкретного типа (например, пик QRS) в конкретном отведении данного раицента:
+    # координаты точек такого-то конкретного типа (например, пик QRS) в конкретном отведении данного паицента:
     points_delineation = get_one_lead_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.i, point_type=POINTS.QRS_PEAK)
     print(points_delineation)
 
+    # координаты точек целых волд (например, комплекса QRS) в конкретном отведении данного паицента:
     wave_delineation = get_full_wave_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.i, wave=WAVES_TYPES.QRS)
     print(wave_delineation)
