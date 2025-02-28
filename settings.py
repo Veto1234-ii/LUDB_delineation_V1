@@ -39,6 +39,21 @@ class POINTS(Enum):
     QRS_PEAK = 8
     QRS_END = 9
 
+POINTS_TYPES_COLORS = {
+    POINTS.T_START:'#71234255',
+    POINTS.T_PEAK:'#37126138',
+    POINTS.T_END:'#60196214',
+
+    POINTS.QRS_PEAK : '#239731',
+    POINTS.QRS_END : '#5621472',
+    POINTS.QRS_START : '#6225081',
+
+    POINTS.P_END : '#71234255',
+    POINTS.P_START : '#71114255',
+    POINTS.P_PEAK : '#71444255'
+    }
+
+
 FREQUENCY = 500 # измерений в секунду
 
 class WavesTypes:

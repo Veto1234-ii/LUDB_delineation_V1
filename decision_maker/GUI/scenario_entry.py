@@ -1,5 +1,5 @@
-from settings import LEADS_NAMES, DELINEATION_LINEWIDTH
-from decision_maker.decision_maker_settings import DECISION_MAKER_COLORS
+from settings import LEADS_NAMES, DELINEATION_LINEWIDTH, POINTS_TYPES_COLORS
+from decision_maker.decision_maker_settings import EntriesTypes
 from visualisation_utils import plot_one_lead_delineation_on_ax
 
 class ScenarioEntry:
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     signal_mV = get_signal_by_id_and_lead_mV(patient_id, lead_name=lead_name, LUDB_data=LUDB_data)
 
     fig, ax = plt.subplots()
-    entry = ScenarioEntry(color_name=DECISION_MAKER_COLORS.QRS_PEAK,
+    entry = ScenarioEntry(color_name=POINTS_TYPES_COLORS[point_type],
                           coords_t=list([delineation[i]/FREQUENCY for i in range(len(delineation))]),
                           lead_name=lead_name,
                           legend="пик QRS",
@@ -42,4 +42,5 @@ if __name__ == "__main__":
 
     entry.draw_to_ax(ax)
     plot_lead_signal_to_ax(signal_mV, ax)
+    plt.legend()
     plt.show()
