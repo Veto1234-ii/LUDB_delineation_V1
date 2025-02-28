@@ -13,10 +13,15 @@ class Scenario:
         self.i=-1
 
 
-
     def add_decision_results_group(self, decision_results):
         pass
 
-    def get_next_to_draw(self):
+    def get_next_group_to_draw(self):
         self.i += 1
-        # вернуть текущую группу решений
+        # вернуть след. группу решений (или None)
+
+
+    def get_prev_group_to_draw(self):
+        self.i -= 1
+        # вернуть прошлую группу решений (или None)
+
