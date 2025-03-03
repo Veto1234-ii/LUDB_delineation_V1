@@ -1,1 +1,1 @@
-from .decisions_results import BinaryActivations, SegmentationActivations
+from .scene_objects import BinaryActivations, SegmentationActivations

@@ -49,6 +49,6 @@ if __name__ == "__main__":
     points_delineation = get_one_lead_delineation_by_patient_id(patient_id, LUDB_data, lead_name=LEADS_NAMES.i, point_type=POINTS_TYPES.QRS_PEAK)
     print(points_delineation)
 
-    # координаты точек целых волд (например, комплекса QRS) в конкретном отведении данного паицента:
+    # координаты точек целых волн (например, комплекса QRS) в конкретном отведении данного паицента:
     wave_delineation = get_full_wave_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.i, wave=WAVES_TYPES.QRS)
     print(wave_delineation)

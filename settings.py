@@ -58,9 +58,17 @@ class WavesTypes:
     def __init__(self):
         self.P = 'p'
         self.QRS = 'qrs'
-        self.T = 't'
+        self.T = 't',
+        self.NO_WAVE = 'nowave'
 
 WAVES_TYPES = WavesTypes()
+
+WAVES_TYPES_COLORS = {
+            WAVES_TYPES.NO_WAVE: 'gray',
+            WAVES_TYPES.QRS: POINTS_TYPES_COLORS[POINTS_TYPES.QRS_PEAK],
+            WAVES_TYPES.P: POINTS_TYPES_COLORS[POINTS_TYPES.P_PEAK],
+            WAVES_TYPES.T: POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK]
+        }
 
 #  Общие настройки рисования:
 
