@@ -1,7 +1,11 @@
 from enum import Enum
 
+# Настройки LUDB:
 PATH_TO_LUDB = 'C:\\Users\\User\\PycharmProjects\\LUDB_delineation_V1\\LUDB\\ecg_data_200.json'
 
+FREQUENCY = 500 # измерений в секунду
+
+# Переменные, связанные с отведениями:
 class LeadsNames:
     def __init__(self):
         self.i='i'
@@ -20,13 +24,9 @@ LEADS_NAMES = LeadsNames()
 
 LEADS_NAMES_ORDERED = ['i', 'ii', 'iii', 'avr', 'avl', 'avf', 'v1', 'v2', 'v3', 'v4', 'v5', 'v6']
 
-class WAVES_NAMES:
-    def __init__(self):
-        self.P = 'p'
-        self.QRS = 'qrs'
-        self.T = 't'
 
-class POINTS(Enum):
+# Переменные, связанные с точками разметки
+class POINTS_TYPES(Enum):
     T_START = 1
     T_PEAK = 2
     T_END = 3
@@ -40,22 +40,20 @@ class POINTS(Enum):
     QRS_END = 9
 
 POINTS_TYPES_COLORS = {
-    POINTS.T_START:'#71234255',
-    POINTS.T_PEAK:'#37126138',
-    POINTS.T_END:'#60196214',
+    POINTS_TYPES.T_START: '#71234255',
+    POINTS_TYPES.T_PEAK: '#37126138',
+    POINTS_TYPES.T_END: '#60196214',
 
-    POINTS.QRS_PEAK : '#239731',
-    POINTS.QRS_END : '#5621472',
-    POINTS.QRS_START : '#6225081',
+    POINTS_TYPES.QRS_PEAK : '#239731',
+    POINTS_TYPES.QRS_END : '#5621472',
+    POINTS_TYPES.QRS_START : '#6225081',
 
-    POINTS.P_END : '#71234255',
-    POINTS.P_START : '#71114255',
-    POINTS.P_PEAK : '#71444255'
+    POINTS_TYPES.P_END : '#71234255',
+    POINTS_TYPES.P_START : '#71114255',
+    POINTS_TYPES.P_PEAK : '#71444255'
     }
 
-
-FREQUENCY = 500 # измерений в секунду
-
+# Переменные, связанные с целыми волнами/сегментами
 class WavesTypes:
     def __init__(self):
         self.P = 'p'
@@ -64,7 +62,7 @@ class WavesTypes:
 
 WAVES_TYPES = WavesTypes()
 
-#      НАСТРОЙКИ РИСОВАНИЯ
+#  Общие настройки рисования:
 
 # вертикальные линии разметки
 DELINEATION_LINEWIDTH = 0.9

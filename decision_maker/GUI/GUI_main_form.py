@@ -1,5 +1,5 @@
 from .drawing_scenario import Scenario
-from draw_decision_result import draw_decision_result_to_ax
+
 
 class GUI_MainForm:
     def __init__(self, signals, leads_names, drawing_scenario):

@@ -1,27 +1,27 @@
-from settings import LEADS_NAMES, POINTS, WAVES_TYPES, FREQUENCY
+from settings import LEADS_NAMES, POINTS_TYPES, WAVES_TYPES, FREQUENCY
 
-def get_one_lead_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.iii, point_type=POINTS.P_START):
+def get_one_lead_delineation_by_patient_id(patient_id, LUDB_data, lead_name=LEADS_NAMES.iii, point_type=POINTS_TYPES.P_START):
     """ Для данного пациента получить координаты точек такого-то типа в таком-то отведении. """
     result_coords = []
 
     wave = None
-    if point_type in [POINTS.QRS_PEAK, POINTS.QRS_END, POINTS.QRS_START]:
+    if point_type in [POINTS_TYPES.QRS_PEAK, POINTS_TYPES.QRS_END, POINTS_TYPES.QRS_START]:
         wave = WAVES_TYPES.QRS
     else:
-        if point_type in [POINTS.T_PEAK, POINTS.T_END, POINTS.T_START]:
+        if point_type in [POINTS_TYPES.T_PEAK, POINTS_TYPES.T_END, POINTS_TYPES.T_START]:
             wave = WAVES_TYPES.T
         else:
-            if point_type in [POINTS.P_PEAK, POINTS.P_END, POINTS.P_START]:
+            if point_type in [POINTS_TYPES.P_PEAK, POINTS_TYPES.P_END, POINTS_TYPES.P_START]:
                 wave = WAVES_TYPES.P
 
     id_in_triplet = None
-    if point_type in [POINTS.QRS_PEAK, POINTS.T_PEAK, POINTS.P_PEAK]:
+    if point_type in [POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK, POINTS_TYPES.P_PEAK]:
         id_in_triplet=1
     else:
-        if point_type in [POINTS.QRS_START, POINTS.T_START, POINTS.P_START]:
+        if point_type in [POINTS_TYPES.QRS_START, POINTS_TYPES.T_START, POINTS_TYPES.P_START]:
             id_in_triplet = 0
         else:
-            if point_type in [POINTS.QRS_END, POINTS.T_END, POINTS.P_END]:
+            if point_type in [POINTS_TYPES.QRS_END, POINTS_TYPES.T_END, POINTS_TYPES.P_END]:
                 id_in_triplet = 2
 
     points_triplets = LUDB_data[patient_id]['Leads'][lead_name]['Delineation'][wave]
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     patient_id =  get_some_test_patient_id()
 
     # координаты точек такого-то конкретного типа (например, пик QRS) в конкретном отведении данного паицента:
-    points_delineation = get_one_lead_delineation_by_patient_id(patient_id,  LUDB_data, lead_name=LEADS_NAMES.i, point_type=POINTS.QRS_PEAK)
+    points_delineation = get_one_lead_delineation_by_patient_id(patient_id, LUDB_data, lead_name=LEADS_NAMES.i, point_type=POINTS_TYPES.QRS_PEAK)
     print(points_delineation)
 
     # координаты точек целых волд (например, комплекса QRS) в конкретном отведении данного паицента:

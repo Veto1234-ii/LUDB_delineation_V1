@@ -11,7 +11,7 @@ def plot_one_lead_delineation_on_ax(ax, delineation_t, Y_max, color=None, legend
 
 
 if __name__ == "__main__":
-    from settings import LEADS_NAMES, POINTS, FREQUENCY, POINTS_TYPES_COLORS
+    from settings import LEADS_NAMES, POINTS_TYPES, FREQUENCY, POINTS_TYPES_COLORS
     from datasets.LUDB_utils import get_some_test_patient_id,  get_one_lead_delineation_by_patient_id, get_signal_by_id_and_lead_mV, get_LUDB_data
     from visualisation_utils import plot_lead_signal_to_ax
     import matplotlib.pyplot as plt
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     plot_lead_signal_to_ax(signal_mV=signal_mV, ax=ax)
 
     # извлекаем и отрисовываем размету
-    point_type = POINTS.QRS_PEAK
+    point_type = POINTS_TYPES.QRS_PEAK
     delineation = get_one_lead_delineation_by_patient_id(patient_id, LUDB_data=LUDB_data, point_type=point_type,
                                                          lead_name=lead_name)
 

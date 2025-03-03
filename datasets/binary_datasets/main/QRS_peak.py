@@ -1,7 +1,7 @@
 from binary_datasets import BinaryDataset
 from binary_dataset_creator import create_dataset_from_scratch
 from serialization import save_binary_dataset_to_file, load_binary_dataset_from_file
-from settings import POINTS, LEADS_NAMES, PATH_TO_LUDB
+from settings import POINTS_TYPES, LEADS_NAMES, PATH_TO_LUDB
 
 from pathlib import Path
 import json
@@ -16,12 +16,12 @@ if __name__ == "__main__":
         LUDB_dataset = json.load(file)
 
     # Составляем свой датасет
-    binary_dataset = create_dataset_from_scratch(point_name=POINTS.QRS_PEAK,
-                                radius=200,
-                                lead_name=LEADS_NAMES.i,
-                                patient_ids=list(LUDB_dataset.keys()),
-                                LUDB_dataset=LUDB_dataset
-                                )
+    binary_dataset = create_dataset_from_scratch(point_name=POINTS_TYPES.QRS_PEAK,
+                                                 radius=200,
+                                                 lead_name=LEADS_NAMES.i,
+                                                 patient_ids=list(LUDB_dataset.keys()),
+                                                 LUDB_dataset=LUDB_dataset
+                                                 )
     # сохраняем в файл
     name = binary_dataset.label
     save_binary_dataset_to_file(binary_dataset=binary_dataset)
