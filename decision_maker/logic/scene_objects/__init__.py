@@ -1,5 +1,4 @@
 from .binary_activations import BinaryActivations
-from .segmentation_activations import SegmentationActivations
 from .delineation_point_strong import DelineationPointsStrong
 from .delineation_point_weak import DelineationPointsWeak
 from .interval_search import IntervalSearch

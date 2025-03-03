@@ -1,14 +1,18 @@
 from settings import POINTS_TYPES_COLORS, DELINEATION_LINEWIDTH
 
 class DelineationPointsStrong:
-    def __init__(self, t, point_type):
+    def __init__(self, t, point_type, sertainty=1):
         self.t = t
         self.point_type = point_type
+        self.sertainty = sertainty
 
-    def draw(self, ax):
+    def draw(self, ax, y_max):
         color = POINTS_TYPES_COLORS[self.point_type]
         ax.axvline(x=self.t, color=color, linewidth=DELINEATION_LINEWIDTH, alpha=0.5)
 
+        # Отразим уровень уверенности (максимально возможный и реальный)
+        ax.scatter(self.t, y_max, marker='x',  alpha=0.5, color='black', s=10)
+        ax.scatter(self.t, self.sertainty*y_max, marker='o',  color='black', alpha=0.5,s=10)
 
 if __name__ == "__main__":
     from settings import LEADS_NAMES, POINTS_TYPES
@@ -25,8 +29,9 @@ if __name__ == "__main__":
     plot_lead_signal_to_ax(signal_mV=signal_mV, ax=ax)
 
     # Придумываем точку
-    point = DelineationPointsStrong(t=2.3, point_type=POINTS_TYPES.QRS_PEAK)
-    point.draw(ax)
+    point = DelineationPointsStrong(t=2.3, point_type=POINTS_TYPES.QRS_PEAK, sertainty=0.6)
+    y_max = max(signal_mV)
+    point.draw(ax, y_max=y_max)
 
     # показываем итог: сигнал и облако активаций поверх него
     ax.legend()
