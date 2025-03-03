@@ -23,7 +23,7 @@ if __name__ == "__main__":
                                 LUDB_dataset=LUDB_dataset
                                 )
     # сохраняем в файл
-    name = binary_dataset.name
+    name = binary_dataset.label
     save_binary_dataset_to_file(binary_dataset=binary_dataset)
     del binary_dataset
 
