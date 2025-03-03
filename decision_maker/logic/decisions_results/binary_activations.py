@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 class BinaryActivations:
     def __init__(self, net_activations, activations_t, type_of_point=POINTS.QRS_PEAK, label=""):
         """
-
+        Объект сцены, инкапсулирующий набор активаций бинарной сети
         Args:
             net_activations: список активаций нейросети
             activations_t: координаты (времена) этих активаций, в секундах
@@ -19,10 +19,25 @@ class BinaryActivations:
 
 
     def draw(self, ax, y_max):
-        color = POINTS_TYPES_COLORS[self.type_of_point]
-        normed_activations = [self.net_activations[i]/y_max for i in range(len(self.net_activations))]
-        ax.plot(self.activations_t, normed_activations, color=color, label=self.label, alpha=0.5)
+        """
+        Отрисовка активаций
+        Args:
+            ax: на какой подрафиг рисовать
+            y_max: (float) на какой множитель умножать активацию в точке,
+                чтобы смасштаюировать активации с сигналом ЭКГ. Это нужно потому,
+                что активации и сигнал имеют разные единицы измерения,
+                 а мы хотим отрисовать их в одном графике.
 
+        Returns:
+
+        """
+        color = POINTS_TYPES_COLORS[self.type_of_point]
+        normed_activations = [self.net_activations[i]*y_max for i in range(len(self.net_activations))]
+        #ax.plot(self.activations_t, normed_activations, color=color, label=self.label, alpha=0.5, linewidth=5)
+        for i in range(len(self.net_activations)):
+            activation = normed_activations[i]
+            t = self.activations_t[i]
+            ax.plot([t, t], [0, activation], color=color, alpha=0.1, linewidth=0.5, label=self.label if i==0 else None)
 
 
 if __name__ == "__main__":
@@ -41,7 +56,7 @@ if __name__ == "__main__":
     plot_lead_signal_to_ax(signal_mV=signal_mV, ax=ax)
 
     # Генерируем случайную серию "активаций"
-    t=[i/FREQUENCY for i in range(0, len(signal_mV))]
+    t=[i/FREQUENCY for i in range(len(signal_mV))]
     y_max = max(signal_mV)
     activations = [abs(math.sin(i)) for i in t]
 
@@ -49,5 +64,7 @@ if __name__ == "__main__":
     binary_activations=BinaryActivations(net_activations=activations,
                                          activations_t=t, type_of_point=POINTS.QRS_PEAK, label="тестовые активации")
     binary_activations.draw(ax, y_max=y_max)
+
+    # показываем итог: сигнал и облако активаций поверх него
     ax.legend()
     plt.show()
