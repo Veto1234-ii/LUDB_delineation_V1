@@ -19,7 +19,7 @@ class SearchInterval:
 
     def draw(self, ax):
 
-        ax.axvspan(self.t_start, self.t_end, color='black', alpha=0.1, hatch='///', edgecolor='red', linewidth=1,label=self.label)
+        ax.axvspan(self.t_start, self.t_end, color='black', alpha=0.2, hatch='///', edgecolor='red', linewidth=1,label=self.label)
 
 
 if __name__ == "__main__":

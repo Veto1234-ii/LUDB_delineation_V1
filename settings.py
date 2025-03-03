@@ -73,7 +73,7 @@ WAVES_TYPES_COLORS = {
 #  Общие настройки рисования:
 
 # вертикальные линии разметки
-DELINEATION_LINEWIDTH = 0.9
+DELINEATION_LINEWIDTH = 1.1
 
 # рисование сигнала на миллиметровке:
 SIGNAL_LINEWIDTH = 1
