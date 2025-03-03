@@ -1,6 +1,6 @@
 from settings import POINTS_TYPES_COLORS, DELINEATION_LINEWIDTH
 
-class DelineationPointsStrong:
+class DelineationPoint:
     def __init__(self, t, point_type, sertainty=1):
         self.t = t
         self.point_type = point_type
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     plot_lead_signal_to_ax(signal_mV=signal_mV, ax=ax)
 
     # Придумываем точку
-    point = DelineationPointsStrong(t=2.3, point_type=POINTS_TYPES.QRS_PEAK, sertainty=0.6)
+    point = DelineationPoint(t=2.3, point_type=POINTS_TYPES.QRS_PEAK, sertainty=0.6)
     y_max = max(signal_mV)
     point.draw(ax, y_max=y_max)
 
