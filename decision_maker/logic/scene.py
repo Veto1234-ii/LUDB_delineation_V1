@@ -1,11 +1,39 @@
 class Scene:
     def __init__(self, signals, leads_names):
-        self.drawable_objects = []
+        self.scene_objects = {}
         self.signals = signals
         self.leads_names = leads_names
 
-    def add_object_to_lead(self, lead_name):
+    def add_delin_point(self, lead_name):
         pass
 
-    def draw(self, list_axes):
+    def add_delin_interval(self, lead_name, delineation_interval):
         pass
+
+    def add_search_interval(self, lead_name, search_interval):
+        pass
+
+    def add_activations(self, lead_name, activations):
+
+    def get_nearest_delin_point(self, t, point_type, to_left, lead_name):
+        return
+
+    def get_nearest_delin_interval(self, t, wave_type, to_left, lead_name):
+        return
+
+    def get_all_points_in_interval(self, t_start, t_end, lead_name):
+        return
+
+    def get_all_delin_intervals_in_interval(self, t_start, t_end, lead_name):
+        pass
+
+    def delete_activations(self):
+        pass
+
+    def delete_oblect_by_id(self, id):
+        pass
+
+    def get_all_objects_in_search_interval(self):
+        pass
+
+    def draw(self):

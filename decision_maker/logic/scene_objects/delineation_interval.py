@@ -15,6 +15,9 @@ class DelineationInterval:
         self.t_end = t_end
         self.interval_type = wave_type
 
+    def contain(self, t):
+        return t<= self.t_end and t>= self.t_start
+
     def draw(self, ax):
         color = WAVES_TYPES_COLORS[self.interval_type]
         ax.axvspan(self.t_start, self.t_end, color=color, alpha=0.3, label=self.label)

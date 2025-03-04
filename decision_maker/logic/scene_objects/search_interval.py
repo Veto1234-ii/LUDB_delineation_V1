@@ -16,9 +16,10 @@ class SearchInterval:
         self.t_start = t_start
         self.t_end = t_end
 
+    def contain(self, t):
+        return t<= self.t_end and t>= self.t_start
 
     def draw(self, ax):
-
         ax.axvspan(self.t_start, self.t_end, color='black', alpha=0.2, hatch='///', edgecolor='red', linewidth=1,label=self.label)
 
 

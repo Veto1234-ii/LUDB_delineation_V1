@@ -1,8 +1,8 @@
-from .drawing_scenario import Scenario
+
 
 
 class GUI_MainForm:
-    def __init__(self, signals, leads_names, drawing_scenario):
+    def __init__(self, signals, leads_names, scenes_list):
         self.i = 0
         # TODO создаем GUI - форму с матлотлиб fig для отрисовки отведений и текстовое окошко для лога
         # Рисуем в картинку сигналы
