@@ -1,7 +1,13 @@
+from settings import FREQUENCY
+
 class Scene:
     def __init__(self, signals, leads_names):
         self.object_id_generator = -1
         self.signals = signals
+        self.leads_names = leads_names
+
+        # переведем время в секунды
+        self.t = [i/FREQUENCY for i in range(len(self.signals[0]))]
 
         # хранилище всех объектов, каждому соотв. его уникальный object_id
         self.scene_objects_dict = {} # {object_id: object}
@@ -14,20 +20,17 @@ class Scene:
             self.leads_names_to_objects[lead_name] = []
 
     def get_signal_by_lead_name(self, lead_name):
-        pass
+        index = self.leads_names.index(lead_name)
+        return self.signals[index]
 
     def get_leads_names(self):
+        return self.leads_names
 
-    def add_delin_point(self, lead_name):
-        pass
+    def add_object(self, lead_name, scene_object):
+        self.object_id_generator+=1
+        self.leads_names_to_object_lists[lead_name].append(self.object_id_generator)
+        self.scene_objects_dict[self.object_id_generator] = scene_object
 
-    def add_delin_interval(self, lead_name, delineation_interval):
-        pass
-
-    def add_search_interval(self, lead_name, search_interval):
-        pass
-
-    def add_activations(self, lead_name, activations):
 
     def get_nearest_delin_point(self, t, point_type, to_left, lead_name):
         return
@@ -51,4 +54,7 @@ class Scene:
         pass
 
     def draw(self, ax_list):
+        pass
+
+    def get_all_undelineated_ts(self):
         pass
