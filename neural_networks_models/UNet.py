@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch import optim
+from torch.utils.data import DataLoader, random_split, Dataset
+
+
 class UNet1D(nn.Module):
     def __init__(self):
         super(UNet1D, self).__init__()
@@ -110,3 +114,66 @@ class UNet1D(nn.Module):
             mask = self.forward(signal)
 
         return mask
+
+def save_model(lead, top):
+    signals = torch.load(f'signals_{lead}_{top}_.pt', weights_only=True).float()
+    masks = torch.load(f'masks_{lead}_{top}_.pt', weights_only=True).float()
+
+    # Определяем размеры выборок
+    total_size = signals.shape[0]
+    train_size = int(0.8 * total_size)  # 80% train, 20% test
+    test_size = total_size - train_size
+
+    class ECGDataset(Dataset):
+        def __init__(self, signals, masks):
+            self.signals = signals
+            self.masks = masks
+
+        def __len__(self):
+            return len(self.signals)
+
+        def __getitem__(self, idx):
+            return self.signals[idx], self.masks[idx]  # (1, 500) и (500)
+
+    # Создаём dataset
+    dataset = ECGDataset(signals, masks)
+
+    # Разбиваем dataset на train/test
+    train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
+
+    # Создаём DataLoader для батчей
+    train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+
+    # Загружаем модель
+    model = UNet1D()
+
+    # Функция потерь
+    # criterion = nn.BCEWithLogitsLoss()
+    # criterion = nn.MSELoss()
+    criterion = nn.BCEWithLogitsLoss()
+
+    # Оптимизатор
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+    num_epochs = 100
+
+    for epoch in range(num_epochs):
+        model.train()
+        running_loss = 0.0
+
+        for signals_batch, masks_batch in train_loader:
+            optimizer.zero_grad()  # Обнуляем градиенты
+
+            outputs = model(signals_batch)
+
+            loss = criterion(outputs, masks_batch)  # Считаем функцию потерь
+            loss.backward()  # Обратное распространение ошибки
+            optimizer.step()  # Обновляем веса модели
+
+            running_loss += loss.item()
+
+        avg_loss = running_loss / len(train_loader)
+        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
+
+    torch.save(model, f"unet_model_{lead}_{top}.pth")
