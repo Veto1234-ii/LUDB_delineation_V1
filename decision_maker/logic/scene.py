@@ -1,8 +1,22 @@
 class Scene:
     def __init__(self, signals, leads_names):
-        self.scene_objects = {}
+        self.object_id_generator = -1
         self.signals = signals
-        self.leads_names = leads_names
+
+        # хранилище всех объектов, каждому соотв. его уникальный object_id
+        self.scene_objects_dict = {} # {object_id: object}
+
+        # распределение объектов по отведениям
+        self.leads_names_to_object_lists = {} # {lead_name: [object_id1,....]}
+
+        # вначале каждому отведению соотв. пустой список объектов
+        for lead_name in leads_names:
+            self.leads_names_to_objects[lead_name] = []
+
+    def get_signal_by_lead_name(self, lead_name):
+        pass
+
+    def get_leads_names(self):
 
     def add_delin_point(self, lead_name):
         pass
@@ -36,4 +50,5 @@ class Scene:
     def get_all_objects_in_search_interval(self):
         pass
 
-    def draw(self):
+    def draw(self, ax_list):
+        pass
