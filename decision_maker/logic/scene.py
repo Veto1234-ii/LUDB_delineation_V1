@@ -56,10 +56,6 @@ class Scene:
         pass
 
     def draw(self, ax_list, num_steps):
-        for i in range(len(ax_list)):
-            ax =
-
-    def draw_lead_to_ax(self, lead_name, ax):
         pass
 
     def get_all_undelineated_ts(self):
