@@ -1,4 +1,4 @@
-from decision_maker.GUI import Scenario
+from scene import Scene
 
 
 class Deciser:

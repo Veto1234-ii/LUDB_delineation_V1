@@ -32,6 +32,8 @@ class Scene:
         self.scene_objects_dict[self.object_id_generator] = scene_object
 
 
+    def get_all_points_in_lead(self, point_type, lead_name):
+
     def get_nearest_delin_point(self, t, point_type, to_left, lead_name):
         return
 
@@ -53,7 +55,11 @@ class Scene:
     def get_all_objects_in_search_interval(self):
         pass
 
-    def draw(self, ax_list):
+    def draw(self, ax_list, num_steps):
+        for i in range(len(ax_list)):
+            ax =
+
+    def draw_lead_to_ax(self, lead_name, ax):
         pass
 
     def get_all_undelineated_ts(self):
