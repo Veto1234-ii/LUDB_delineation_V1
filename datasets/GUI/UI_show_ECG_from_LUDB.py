@@ -7,14 +7,12 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 
 
-class UI_MainForm:
-    def __init__(self, signals, leads_names, scene):
-        self.scene = scene
+class UI:
+    def __init__(self, signals, leads_names):
 
         self.signals = signals
         self.leads_names = leads_names
 
-        self.Y_max, self.Y_min = self.get_MAX_MIN_Y()
 
         self.root = tk.Tk()
         self.root.state('zoomed')  # Запускаем окно в полноэкранном режиме
@@ -27,12 +25,8 @@ class UI_MainForm:
         self.top_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.bottom_frame.pack(side=tk.BOTTOM, fill=tk.X, expand=False)
 
-        self.axs = []
-        self.canvases=[]
-
         # Создаем графики на верхнем фрейме
         self.create_plots(self.top_frame)
-        self.draw_signals()
 
         # Создаем нижний фрейм c текстом
         entry1 = tk.Text(self.bottom_frame, wrap=tk.WORD)
@@ -41,12 +35,7 @@ class UI_MainForm:
 
         # Привязываем обработчик события изменения размера окна
         self.root.bind("<Configure>", self.update_frames)
-        # Привязываем обработчик нажатия клавиш
-        self.root.bind("<KeyPress>", self.on_key_press)
-
         self.update_frames()
-
-
 
         # Запускаем главный цикл
         self.root.mainloop()
@@ -70,7 +59,7 @@ class UI_MainForm:
 
         # Вычисляем высоту каждого рисунка как долю от высоты верхнего фрейма
         plot_height = 2.0 / n  # Высота каждого графика (в дюймах)
-
+        Y_max, Y_min = self.get_MAX_MIN_Y()
 
         for i in range(n):
             signal = self.signals[i]
@@ -79,8 +68,10 @@ class UI_MainForm:
             # создаем рисунок
             fig = plt.Figure(figsize=(6, plot_height))
             ax = fig.add_subplot(111)
-            self.axs.append(ax)
 
+            # Рисуем на нем сигнал
+            plot_lead_signal_to_ax(ax=ax, signal_mV=signal, Y_max=Y_max,
+                     Y_min=Y_min)
 
             # Создаем фрейм для рисунка и подписи к нему
             lead_frame = ttk.Frame(parent)
@@ -90,34 +81,10 @@ class UI_MainForm:
             canvas = FigureCanvasTkAgg(fig, master=lead_frame)
             canvas.draw()
             canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-            self.canvases.append(canvas)
 
             # Вставляем подпись (имя отведения) справа от рисунка
             label = tk.Label(lead_frame, text=name, font=("Arial", 14))
             label.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False, pady=10)
-
-    def draw_signals(self):
-        # Рисуем
-        for i, ax in enumerate(self.axs):
-            # Рисуем на нем сигнал
-            plot_lead_signal_to_ax(ax=ax, signal_mV=self.signals[i], Y_max=self.Y_max,
-                                   Y_min=self.Y_min)
-
-    def on_key_press(self, event):
-        """Обработчик нажатия клавиш"""
-
-        # Очищаем все подграфики перед рисованием
-        for ax in self.axs:
-            ax.clear()
-
-        self.draw_signals()
-
-        # Обновляем холст
-        for canvas in self.canvases:
-            canvas.draw()
-
-    def draw_scene(self):
-        pass
 
 if __name__ == "__main__":
     # какие отведения хотим показать
@@ -129,4 +96,4 @@ if __name__ == "__main__":
     patient_id = get_some_test_patient_id()
     signals_list, leads_names_list = get_signals_by_id_several_leads_mV(patient_id=patient_id, LUDB_data=LUDB_data,leads_names_list=leads_names)
 
-    ui = UI_MainForm(leads_names=leads_names_list, signals=signals_list)
+    ui = UI(leads_names=leads_names_list, signals=signals_list)

@@ -22,6 +22,15 @@ def get_signals_by_id_several_leads_mkV(patient_id, LUDB_data, leads_names_list)
         signals_list.append(lead_signal)
     return signals_list, leads_names_list
 
+def get_signals_by_id_several_leads_mV(patient_id, LUDB_data, leads_names_list):
+    """ Cигнал данного пациента с некоторых отведений, в микро_вотльтах. """
+    signals_list = []
+    for lead_name in leads_names_list:
+        lead_signal =  get_signal_by_id_and_lead_mkV(patient_id, lead_name, LUDB_data)
+        lead_signal = [s / 1000 for s in lead_signal]  # делим на 1000, т.к. хотим в мВ, а в датасете в мкВ
+        signals_list.append(lead_signal)
+    return signals_list, leads_names_list
+
 
 if __name__ == "__main__":
     from get_some_test_patient_id import get_some_test_patient_id
