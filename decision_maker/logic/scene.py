@@ -1,8 +1,14 @@
 
 
 from settings import FREQUENCY, LEADS_NAMES, POINTS_TYPES, WAVES_TYPES
-from scene_objects import DelineationPoint, DelineationInterval, SearchInterval, Activations
+from decision_maker.logic import DelineationPoint, DelineationInterval, SearchInterval, Activations
 
+from settings import LEADS_NAMES, FREQUENCY
+from datasets.LUDB_utils import get_some_test_patient_id, get_signal_by_id_and_lead_mV, get_LUDB_data
+from visualisation_utils import plot_lead_signal_to_ax
+
+
+import matplotlib.pyplot as plt
 
 class Scene:
     def __init__(self):
@@ -77,21 +83,17 @@ class Scene:
             else:
                 drawable_obj.draw(ax=ax_list[index_of_ax])
 
-
-if __name__ == "__main__":
-    from settings import LEADS_NAMES, FREQUENCY
-    from datasets.LUDB_utils import get_some_test_patient_id, get_signal_by_id_and_lead_mV, get_LUDB_data
-    from visualisation_utils import plot_lead_signal_to_ax
-    import matplotlib.pyplot as plt
-
+def create_test_scene_and_history():
     # Созададим и заполним объектами сцену
+    from decision_maker.logic import SceneHistory
     scene = Scene()
-    point1 = DelineationPoint(t = 1.2,
+    point1 = DelineationPoint(t=1.2,
+
                               lead_name=LEADS_NAMES.i,
                               point_type=POINTS_TYPES.QRS_START,
                               sertainty=0.8)
 
-    point2 = DelineationPoint(t = 2.2,
+    point2 = DelineationPoint(t=2.2,
                               lead_name=LEADS_NAMES.i,
                               point_type=POINTS_TYPES.QRS_END,
                               sertainty=0.5)
@@ -102,6 +104,19 @@ if __name__ == "__main__":
     id2 = scene.add_object(point2)
     id3 = scene.add_object(interval)
 
+    # Имея id-шники объектов сцены создадим какоую-нибудь историю
+    scene_history = SceneHistory()
+    scene_history.add_entry(visibles=[id1])
+    scene_history.add_entry(invisibles=[id1], visibles=[id2])
+    scene_history.add_entry(visibles=[id1, id2, id3])
+
+    return scene, scene_history
+
+
+if __name__ == "__main__":
+
+
+
     # Отрисуем поверх сигнала случайного пациента
 
     LUDB_data = get_LUDB_data()
@@ -111,6 +126,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
     plot_lead_signal_to_ax(signal_mV=signal_mV, ax=ax)
 
+    scene, _ = create_test_scene_and_history()
     scene.draw(ax_list=[ax],
                leads_names=[LEADS_NAMES.i],
                y_max=max(signal_mV),
