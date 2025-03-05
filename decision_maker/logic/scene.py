@@ -1,4 +1,6 @@
-from settings import FREQUENCY
+
+
+from settings import FREQUENCY, LEADS_NAMES, POINTS_TYPES, WAVES_TYPES
 from scene_objects import DelineationPoint, DelineationInterval, SearchInterval, Activations
 
 
@@ -49,7 +51,7 @@ class Scene:
         for _, obj in self.scene_objects_dict.items():
             if isinstance(obj, DelineationInterval):
                 first_id = obj.delin_point_start.id
-                if first_id == point_id
+                if first_id == point_id:
                     return obj
         return None
 
@@ -57,15 +59,65 @@ class Scene:
         for _, obj in self.scene_objects_dict.items():
             if isinstance(obj, DelineationInterval):
                 end_id = obj.delin_point_start.id
-                if end_id == point_id
+                if end_id == point_id:
                     return obj
         return None
 
+    def get_all_objects_ids(self):
+        return list(self.scene_objects_dict.keys())
 
     def draw(self, ax_list, leads_names, ids, y_max):
         for id in ids:
             drawable_obj = self.scene_objects_dict[id]
             lead_name = drawable_obj.lead_name
             index_of_ax = leads_names.index(lead_name)
-            drawable_obj.draw(ax=ax_list[index_of_ax], y_max=y_max)
+            if (isinstance(drawable_obj, DelineationPoint) or
+                    isinstance(drawable_obj, Activations)):
+                drawable_obj.draw(ax=ax_list[index_of_ax], y_max=y_max)
+            else:
+                drawable_obj.draw(ax=ax_list[index_of_ax])
+
+
+if __name__ == "__main__":
+    from settings import LEADS_NAMES, FREQUENCY
+    from datasets.LUDB_utils import get_some_test_patient_id, get_signal_by_id_and_lead_mV, get_LUDB_data
+    from visualisation_utils import plot_lead_signal_to_ax
+    import matplotlib.pyplot as plt
+
+    # Созададим и заполним объектами сцену
+    scene = Scene()
+    point1 = DelineationPoint(t = 1.2,
+                              lead_name=LEADS_NAMES.i,
+                              point_type=POINTS_TYPES.QRS_START,
+                              sertainty=0.8)
+
+    point2 = DelineationPoint(t = 2.2,
+                              lead_name=LEADS_NAMES.i,
+                              point_type=POINTS_TYPES.QRS_END,
+                              sertainty=0.5)
+
+    interval = DelineationInterval(delin_point_start=point1, delin_point_end=point2)
+
+    id1 = scene.add_object(point1)
+    id2 = scene.add_object(point2)
+    id3 = scene.add_object(interval)
+
+    # Отрисуем поверх сигнала случайного пациента
+
+    LUDB_data = get_LUDB_data()
+    patient_id = get_some_test_patient_id()
+    lead_name = LEADS_NAMES.i
+    signal_mV = get_signal_by_id_and_lead_mV(patient_id, lead_name=lead_name, LUDB_data=LUDB_data)
+    fig, ax = plt.subplots()
+    plot_lead_signal_to_ax(signal_mV=signal_mV, ax=ax)
+
+    scene.draw(ax_list=[ax],
+               leads_names=[LEADS_NAMES.i],
+               y_max=max(signal_mV),
+               ids=scene.get_all_objects_ids())
+
+    plt.show()
+
+
+
 

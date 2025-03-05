@@ -2,7 +2,7 @@ from decision_maker.logic import Scene
 
 
 class GUI_MainForm:
-    def __init__(self, signals, leads_names, scene):
+    def __init__(self, signals, leads_names, scene, history):
         self.scene = scene
         self.current_step_num = -1
         self.ax_list =
