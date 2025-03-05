@@ -74,9 +74,7 @@ class UI_MainForm:
         # Вычисляем высоту каждого рисунка как долю от высоты верхнего фрейма
         plot_height = 2.0 / n  # Высота каждого графика (в дюймах)
 
-
         for i in range(n):
-            signal = self.signals[i]
             name = self.leads_names[i]
 
             # создаем рисунок
@@ -116,6 +114,7 @@ class UI_MainForm:
         self.draw_signals()
 
         self.history_step_i += 1
+
         ids = self.scene_history.get_ids_for_step_i(self.history_step_i)
         #ids = scene.get_all_objects_ids()
         self.scene.draw(ax_list=self.axs, leads_names=self.leads_names, ids=ids, y_max=self.Y_max)
@@ -124,8 +123,7 @@ class UI_MainForm:
         for canvas in self.canvases:
             canvas.draw()
 
-    def draw_scene(self):
-        pass
+
 
 if __name__ == "__main__":
     from decision_maker.logic import Scene, create_test_scene_and_history

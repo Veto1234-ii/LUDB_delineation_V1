@@ -9,6 +9,7 @@ from visualisation_utils import plot_lead_signal_to_ax
 
 
 import matplotlib.pyplot as plt
+from math import sin
 
 class Scene:
     def __init__(self):
@@ -100,15 +101,29 @@ def create_test_scene_and_history():
 
     interval = DelineationInterval(delin_point_start=point1, delin_point_end=point2)
 
+
+    activation_t = [i/1000 for i in range(1000, 1500)]
+    net_activations =[sin(activation) for activation in activation_t]
+    activ = Activations(net_activations=net_activations,
+                        activations_t=activation_t,
+                        color='red',
+                        lead_name=LEADS_NAMES.ii)
+
+    search_interval = SearchInterval(t_start=3, t_end=3.7, lead_name=LEADS_NAMES.iii)
+
     id1 = scene.add_object(point1)
     id2 = scene.add_object(point2)
     id3 = scene.add_object(interval)
+    id4 = scene.add_object(activ)
+    id5 = scene.add_object(search_interval)
 
     # Имея id-шники объектов сцены создадим какоую-нибудь историю
     scene_history = SceneHistory()
     scene_history.add_entry(visibles=[id1])
     scene_history.add_entry(invisibles=[id1], visibles=[id2])
     scene_history.add_entry(visibles=[id1, id2, id3])
+    scene_history.add_entry(visibles=[id4])
+    scene_history.add_entry(visibles=[id5], invisibles=[id3])
 
     return scene, scene_history
 

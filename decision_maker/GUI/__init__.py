@@ -1,2 +1,2 @@
 
-from .drawing_scenario import Scenario
+from .GUI_main_form import UI_MainForm

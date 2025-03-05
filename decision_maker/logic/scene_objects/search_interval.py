@@ -21,7 +21,7 @@ class SearchInterval:
         self.id_in_scene = None  # Автоматически назначается сценой
 
     def draw(self, ax):
-        ax.axvspan(self.t_start, self.t_end, color='black', alpha=0.2, hatch='///', edgecolor='red', linewidth=1)
+        ax.axvspan(self.t_start, self.t_end, color='black', alpha=0.2, hatch='///', linewidth=1)
 
 
 if __name__ == "__main__":
