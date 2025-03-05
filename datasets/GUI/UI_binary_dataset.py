@@ -1,5 +1,5 @@
 from datasets.binary_datasets import BinaryDataset
-from GUI.ecg_viewer import ECGViewer  # подключение интерфейса
+from datasets.GUI.ecg_viewer import ECGViewer  # подключение интерфейса
 import tkinter as tk
 
 class UIBinaryDataset:
