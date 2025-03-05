@@ -14,6 +14,8 @@ class Deciser:
         # загружаем нейросети...
         # запоняем сцену и историю
 
+    def run(self):
+        pass
 
 if __name__ == "__main__":
     from decision_maker.logic import Scene, create_test_scene_and_history
@@ -26,6 +28,9 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
     patient_id = get_some_test_patient_id()
     signals_list, leads_names_list = get_signals_by_id_several_leads_mV(patient_id=patient_id, LUDB_data=LUDB_data,leads_names_list=leads_names)
+
+    #deciser = Deciser(signals=signals_list,  leads_names=leads_names_list)
+    #desiser.run()
 
     scene, scene_history = create_test_scene_and_history() # их надо взять из отработавшего Deciser
     ui = UI_MainForm(leads_names=leads_names_list, signals=signals_list, scene=scene, scene_history=scene_history)

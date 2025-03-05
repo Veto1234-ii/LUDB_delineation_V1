@@ -102,7 +102,7 @@ def create_test_scene_and_history():
     interval = DelineationInterval(delin_point_start=point1, delin_point_end=point2)
 
 
-    activation_t = [i/1000 for i in range(1000, 1500)]
+    activation_t = [i/FREQUENCY for i in range(1000, 1500)]
     net_activations =[sin(activation) for activation in activation_t]
     activ = Activations(net_activations=net_activations,
                         activations_t=activation_t,
