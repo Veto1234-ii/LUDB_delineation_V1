@@ -1,21 +1,23 @@
-from settings import POINTS_TYPES, POINTS_TYPES_COLORS
+from settings import POINTS_TYPES, POINTS_TYPES_COLORS, LEADS_NAMES
 import matplotlib.pyplot as plt
 
 
-class BinaryActivations:
-    def __init__(self, net_activations, activations_t, type_of_point=POINTS_TYPES.QRS_PEAK, label=""):
+class Activations:
+    def __init__(self, net_activations, activations_t, color='gray', lead_name=LEADS_NAMES.i):
         """
         Объект сцены, инкапсулирующий набор активаций бинарной сети
         Args:
             net_activations: (list) список активаций нейросети
             activations_t: (list) координаты (времена) этих активаций, в секундах
             type_of_point: на каком типе точек специализируется эта сеть
-            label: (str) строчка c какисм-то пояснением, которая пойдет в лог
+            lead_name: имя  отведения (см. settings)
         """
         self.net_activations = net_activations
         self.activations_t = activations_t
-        self.label = label
-        self.type_of_point = type_of_point
+        self.color = color
+        self.lead_name = lead_name
+
+        self.id_in_scene = None # Автоматически назначается сценой
 
     def draw(self, ax, y_max):
         """
@@ -30,14 +32,13 @@ class BinaryActivations:
         Returns:
 
         """
-        color = POINTS_TYPES_COLORS[self.type_of_point]
+
         normed_activations = [self.net_activations[i] * y_max for i in range(len(self.net_activations))]
         # ax.plot(self.activations_t, normed_activations, color=color, label=self.label, alpha=0.5, linewidth=5)
         for i in range(len(self.net_activations)):
             activation = normed_activations[i]
             t = self.activations_t[i]
-            ax.plot([t, t], [0, activation], color=color, alpha=0.1, linewidth=0.5,
-                    label=self.label if i == 0 else None)
+            ax.plot([t, t], [0, activation], color=self.color, alpha=0.1, linewidth=0.5)
 
 
 if __name__ == "__main__":
@@ -61,12 +62,12 @@ if __name__ == "__main__":
     activations = [abs(math.sin(i)) for i in t]
 
     # Рисуем сгенерированные активации:
-    binary_activations = BinaryActivations(net_activations=activations,
-                                           activations_t=t,
-                                           type_of_point=POINTS_TYPES.QRS_PEAK,
-                                           label="тестовые активации")
-    binary_activations.draw(ax, y_max=y_max)
+    activations_obj = Activations(net_activations=activations,
+                                     activations_t=t,
+                                     color='green',
+                                     lead_name=LEADS_NAMES.i
+                                     )
+    activations_obj.draw(ax, y_max=y_max)
 
     # показываем итог: сигнал и облако активаций поверх него
-    ax.legend()
     plt.show()

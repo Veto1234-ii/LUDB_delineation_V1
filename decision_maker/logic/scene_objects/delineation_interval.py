@@ -1,32 +1,51 @@
-from settings import WAVES_TYPES_COLORS
+from settings import WAVES_TYPES_COLORS, WAVES_TYPES, POINTS_TYPES
 
 class DelineationInterval:
-    def __init__(self, t_start, t_end, wave_type, label=None):
+    def __init__(self, delin_point_start, delin_point_end):
         """
         Объект сцены, инкапсулирующий интервал разметки, у интервала определенный тип, начало и конец
         Args:
-            t_start: (float) начало интервала в секундах
-            t_end: (float) конец интервала в секундах
-            wave_type: тип интервала (см. settings)
-            label: (str) пояснение для лога и легенды, если нужно
+            delin_point_start: объект = точка разметки (старт интервала)
+            delin_point_end: объект = точка разметки  (конец интервала )
+
+
         """
-        self.label = label
-        self.t_start = t_start
-        self.t_end = t_end
-        self.interval_type = wave_type
+        self.delin_point_start= delin_point_start
+        self.delin_point_end = delin_point_end
+
+        if delin_point_start.point_type == POINTS_TYPES.QRS_START:
+            self.interval_type = WAVES_TYPES.QRS
+        else:
+            if delin_point_start.point_type == POINTS_TYPES.T_START:
+                self.interval_type = WAVES_TYPES.T
+            else:
+                if delin_point_start.point_type == POINTS_TYPES.P_START:
+                    self.interval_type = WAVES_TYPES.P
+                else:
+                    self.interval_type = WAVES_TYPES.NO_WAVE
+
+        self.lead_name = delin_point_start.lead_name
+
+        self.id_in_scene = None  # Автоматически назначается сценой
 
     def contain(self, t):
-        return t<= self.t_end and t>= self.t_start
+        t_start = self.delin_point_start.t
+        t_end = self.delin_point_end.t
+        return t<= t_end and t>= t_start
 
     def draw(self, ax):
         color = WAVES_TYPES_COLORS[self.interval_type]
-        ax.axvspan(self.t_start, self.t_end, color=color, alpha=0.3, label=self.label)
+        t_start = self.delin_point_start.t
+        t_end = self.delin_point_end.t
+        ax.axvspan(t_start, t_end, color=color, alpha=0.3)
 
 
 if __name__ == "__main__":
-    from settings import LEADS_NAMES, FREQUENCY, WAVES_TYPES
+    from settings import LEADS_NAMES, FREQUENCY, WAVES_TYPES, POINTS_TYPES
     from datasets.LUDB_utils import get_some_test_patient_id, get_signal_by_id_and_lead_mV, get_LUDB_data
     from visualisation_utils import plot_lead_signal_to_ax
+    from delineation_point import DelineationPoint
+
     import matplotlib.pyplot as plt
     import math
 
@@ -39,8 +58,9 @@ if __name__ == "__main__":
     plot_lead_signal_to_ax(signal_mV=signal_mV, ax=ax)
 
     # Придумываем интервал и рисуем
-    delineation_interval = DelineationInterval(t_start=1, t_end=2.1, wave_type=WAVES_TYPES.QRS)
+    point1 = DelineationPoint(t=1, point_type=POINTS_TYPES.QRS_START, lead_name=LEADS_NAMES.i, sertainty=0.6)
+    point2 = DelineationPoint(t=2.1, point_type=POINTS_TYPES.QRS_END, lead_name=LEADS_NAMES.i, sertainty=0.6)
+    delineation_interval = DelineationInterval(delin_point_start=point1, delin_point_end=point2)
     delineation_interval.draw(ax)
-    # показываем итог: сигнал и облако активаций поверх него
-    ax.legend()
+
     plt.show()

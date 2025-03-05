@@ -1,2 +1,2 @@
-from .scene_objects import BinaryActivations, DelineationPoint, SearchInterval, DelineationInterval
+from .scene_objects import Activations, DelineationPoint, SearchInterval, DelineationInterval
 from .scene import Scene

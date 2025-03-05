@@ -1,10 +1,13 @@
 from settings import POINTS_TYPES_COLORS, DELINEATION_LINEWIDTH
 
 class DelineationPoint:
-    def __init__(self, t, point_type, sertainty=1):
+    def __init__(self, t, point_type, lead_name, sertainty=1):
         self.t = t
         self.point_type = point_type
         self.sertainty = sertainty
+        self.lead_name = lead_name
+
+        self.id_in_scene = None  # Автоматически назначается сценой
 
     def draw(self, ax, y_max):
         color = POINTS_TYPES_COLORS[self.point_type]
@@ -29,7 +32,7 @@ if __name__ == "__main__":
     plot_lead_signal_to_ax(signal_mV=signal_mV, ax=ax)
 
     # Придумываем точку
-    point = DelineationPoint(t=2.3, point_type=POINTS_TYPES.QRS_PEAK, sertainty=0.6)
+    point = DelineationPoint(t=2.3, point_type=POINTS_TYPES.QRS_PEAK, lead_name=LEADS_NAMES.i, sertainty=0.6)
     y_max = max(signal_mV)
     point.draw(ax, y_max=y_max)
 
