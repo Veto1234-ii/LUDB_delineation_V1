@@ -66,7 +66,7 @@ class ECGViewer:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    
+
     # генерация тестовых данных (замена на реальные)
     num_signals = 15
     signal_length = 500  # 1 секунда при 500 Гц

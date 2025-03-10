@@ -20,6 +20,7 @@ class LeadsNames:
         self.v4='v4'
         self.v5='v5'
         self.v6='v6'
+
 LEADS_NAMES = LeadsNames()
 
 LEADS_NAMES_ORDERED = ['i', 'ii', 'iii', 'avr', 'avl', 'avf', 'v1', 'v2', 'v3', 'v4', 'v5', 'v6']
