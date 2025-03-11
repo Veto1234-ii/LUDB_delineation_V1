@@ -59,7 +59,7 @@ class WavesTypes:
     def __init__(self):
         self.P = 'p'
         self.QRS = 'qrs'
-        self.T = 't',
+        self.T = 't'
         self.NO_WAVE = 'nowave'
 
 WAVES_TYPES = WavesTypes()
