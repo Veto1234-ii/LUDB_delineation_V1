@@ -13,7 +13,7 @@ def create_dataset_from_scratch(point_name, radius, lead_name, patient_ids, LUDB
     # TODO на первой грппе пациентов собираем трейн, на второй тест  - уже нашего микродатасета
     # TODO заполняем объект BinaryDataset и возвращаем его
 
-    dataset_size = 100
+    dataset_size = 1000
 
     # Разделение пациентов на обучающую и тестовую выборки
     train_ids, test_ids = get_test_and_train_ids(LUDB_dataset)
