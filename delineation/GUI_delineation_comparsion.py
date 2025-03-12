@@ -9,8 +9,8 @@ class PatientContainer:
         Это три вещи, нужные, чтоб для данного пациента наглядтно посмотреть в GUI, насколько хорошо наша модель его разметила.
         Класс является служебным для GUI_DekineationComparsion.
         Args:
-            true_delinations: список объектов DelineationOnePoint - правильная разметка
-            our_delineations: список объектов DelineationOnePoint - наша разметка
+            true_delinations: список объектов DelineationOnePoint - правильная разметка. Список может содержать от 1 до 12x9 элементов
+            our_delineations: список объектов DelineationOnePoint - наша разметка. Список может содержать от 1 до 12x9 элементов
             signals_list_mV: сигналы нескольких отведений
             leads_names_list: имена этих отведений, взятых из LEADS_NAMES
             patient_id: id пациента в датасете
