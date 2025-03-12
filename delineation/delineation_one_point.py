@@ -15,7 +15,10 @@ class DelineationOnePoint:
         self.point_type =point_type
         self.lead_name = lead_name
         self.delin_coords = delin_coords
-        self.delin_weights = delin_weights # TODO если None, то забить единицами
+        if delin_weights is None:
+            self.delin_weights = [1]* len(delin_coords)
+        else:
+            self.delin_weights = delin_weights
 
     def __len__(self):
         return len(self.delin_coords)

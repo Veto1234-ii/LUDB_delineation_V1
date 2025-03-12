@@ -4,6 +4,17 @@ from settings import LEADS_NAMES, POINTS_TYPES
 
 class PatientContainer:
     def __init__(self, true_delinations, our_delineations, signals_list_mV, leads_names_list, patient_id='-1'):
+        """
+        Сигнал отведений пациента + правильная разметка + наша разметка.
+        Это три вещи, нужные, чтоб для данного пациента наглядтно посмотреть в GUI, насколько хорошо наша модель его разметила.
+        Класс является служебным для GUI_DekineationComparsion.
+        Args:
+            true_delinations: список объектов DelineationOnePoint - правильная разметка
+            our_delineations: список объектов DelineationOnePoint - наша разметка
+            signals_list_mV: сигналы нескольких отведений
+            leads_names_list: имена этих отведений, взятых из LEADS_NAMES
+            patient_id: id пациента в датасете
+        """
         pass
 
 class GUI_DekineationComparsion:
