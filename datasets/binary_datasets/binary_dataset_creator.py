@@ -6,14 +6,19 @@ from settings import FREQUENCY
 import numpy as np
 import random
 
-def create_dataset_from_scratch(point_name, radius, lead_name, LUDB_dataset):
+def create_dataset_from_scratch(point_name, radius, lead_name, LUDB_dataset, dataset_size = 1000):
+    """
 
-    # TODO составляем имя датасета как "Бинарный датасет " + размер датасета, название отведения, какую точку искали , радиус
-    # в LUDB_utils взять id-шники трейновых и тестовых пациентов
-    # TODO на первой грппе пациентов собираем трейн, на второй тест  - уже нашего микродатасета
-    # TODO заполняем объект BinaryDataset и возвращаем его
+    Args:
+        point_name: тип точки, один из 9, брать в POINTS_TYPES
+        radius: (int) радус окна вокруг точки, число от 1 до MAX_SIGNAL_LEN/2
+        lead_name: имя отведения, брать его в LEADS_NAMES
+        LUDB_dataset: загруженый из json файл датасета LUDB
+        dataset_size: сколько экземпляров хотим в нашем датасете (это длина теста + длина трейна)
 
-    dataset_size = 1000
+    Returns: (BinaryDataset) датасет бинарной классификации
+
+    """
 
     # Разделение пациентов на обучающую и тестовую выборки
     train_ids, test_ids = get_test_and_train_ids(LUDB_dataset)
