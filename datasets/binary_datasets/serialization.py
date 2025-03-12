@@ -3,7 +3,7 @@ import os
 import json
 import numpy as np
 
-def load_binary_dataset_from_file(name, save_dir="SAVED_DATSETS"):
+def load_binary_dataset_from_file(name, save_dir="SAVED_DATASETS"):
     # TODO составляем имя файла как name + расширение
     # TODO возвращаем объект BinaryDataset
 
@@ -24,7 +24,7 @@ def load_binary_dataset_from_file(name, save_dir="SAVED_DATSETS"):
     )
     return binary_dataset
 
-def save_binary_dataset_to_file(binary_dataset, save_dir="SAVED_DATSETS"):
+def save_binary_dataset_to_file(binary_dataset, save_dir="SAVED_DATASETS"):
     # TODO сохранение в файл с именем binary_dataset.name + расширение
 
     save_path = os.path.join(os.path.dirname(__file__), "..", "..", save_dir)

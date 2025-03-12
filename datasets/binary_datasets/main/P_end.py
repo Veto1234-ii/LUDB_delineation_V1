@@ -25,11 +25,11 @@ if __name__ == "__main__":
 
     # сохраняем в файл
     name = binary_dataset.get_name()
-    save_binary_dataset_to_file(binary_dataset=binary_dataset, save_dir="SAVED_DATSETS")
+    save_binary_dataset_to_file(binary_dataset=binary_dataset, save_dir="SAVED_DATASETS")
     del binary_dataset
 
     # загружаем из файла
-    binary_dataset = load_binary_dataset_from_file(name=name, save_dir="SAVED_DATSETS")
+    binary_dataset = load_binary_dataset_from_file(name=name, save_dir="SAVED_DATASETS")
 
     # Листаем его в UI с визуализацией картинок
     binary_dataset_visualizator = UIBinaryDataset(binary_dataset)
