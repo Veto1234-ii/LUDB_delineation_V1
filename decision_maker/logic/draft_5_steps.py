@@ -7,8 +7,6 @@ from neural_networks_helpers.helpers_CNN.one_CNN_activations_to_delineation impo
 
 
 
-
-
 class LogicDraft5:
     
     def __init__(self, leads_signal, leads_names):

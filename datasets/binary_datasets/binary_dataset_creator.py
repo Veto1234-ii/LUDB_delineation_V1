@@ -6,7 +6,7 @@ from settings import FREQUENCY
 import numpy as np
 import random
 
-def create_dataset_from_scratch(point_name, radius, lead_name, patient_ids, LUDB_dataset):
+def create_dataset_from_scratch(point_name, radius, lead_name, LUDB_dataset):
 
     # TODO составляем имя датасета как "Бинарный датасет " + размер датасета, название отведения, какую точку искали , радиус
     # в LUDB_utils взять id-шники трейновых и тестовых пациентов

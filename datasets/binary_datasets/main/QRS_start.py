@@ -19,7 +19,6 @@ if __name__ == "__main__":
     binary_dataset = create_dataset_from_scratch(point_name=POINTS_TYPES.QRS_START,
                                                  radius=200,
                                                  lead_name=LEADS_NAMES.i,
-                                                 patient_ids=list(LUDB_dataset.keys()),
                                                  LUDB_dataset=LUDB_dataset
                                                  )
 
