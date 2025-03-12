@@ -6,8 +6,9 @@ class UIBinaryDataset:
     def __init__(self, binary_dataset):
         train_data = binary_dataset.get_train()
 
-        signals = train_data["signals"]  # проверить, как хранятся сигналы
-        answers = train_data["answers"]  # метки (0 или 1)
+        # signals = train_data["signals"]  # проверить, как хранятся сигналы
+        # answers = train_data["answers"]  # метки (0 или 1)
+        signals, answers = binary_dataset.get_train()
 
         # запуск GUI
         root = tk.Tk()

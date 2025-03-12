@@ -16,9 +16,9 @@ if __name__ == "__main__":
         LUDB_dataset = json.load(file)
 
     # Составляем свой датасет
-    binary_dataset = create_dataset_from_scratch(point_name=POINTS_TYPES.QRS_END,
+    binary_dataset = create_dataset_from_scratch(point_name=POINTS_TYPES.T_END,
                                                  radius=200,
-                                                 lead_name=LEADS_NAMES.iii,
+                                                 lead_name=LEADS_NAMES.i,
                                                  patient_ids=list(LUDB_dataset.keys()),
                                                  LUDB_dataset=LUDB_dataset
                                                  )
