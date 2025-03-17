@@ -5,7 +5,9 @@ from neural_networks_helpers.helpers_CNN.one_CNN_get_activations_on_signal impor
 from neural_networks_helpers.helpers_CNN.one_CNN_activations_to_delineation import get_delineation_from_activation_by_mean
 
 from neural_networks_helpers.helpers_CNN.group_CNN_get_activations_on_signals import get_activations_of_group_CNN
-from neural_networks_helpers.helpers_CNN.group_CNN_to_delineation import get_democracy_delineation_by_mean
+
+from neural_networks_helpers.helpers_CNN.F1_of_CNN import get_F1_of_one_CNN
+
 
 from decision_maker.logic.scene import Scene
 from decision_maker.logic.scene_history import SceneHistory
@@ -39,98 +41,133 @@ class Deciser:
         self.cnn_i_t = get_appliable('cnn_i_t')
         self.cnn_ii_t = get_appliable('cnn_ii_t')
         self.cnn_iii_t = get_appliable('cnn_iii_t')
-
-
+        
+        self.time_s = [i/FREQUENCY for i in range(5000)]
         
         
+        self.activations_qrs = None
+        self.activations_p = None
+        self.activations_t = None
+        
+        self.delineation_qrs = None
+        self.delineation_p = None
+        self.delineation_t = None
+        
+        self.delin_weights_qrs = None
+        self.delin_weights_p = None
+        self.delin_weights_t = None        
+
+
+    def get_delineation_and_weights_qrs_p_t(self, threshold):
+        
+        self.activations_qrs = get_activations_of_CNN_on_signal(self.cnn_i_qrs, self.signals[0])
+
+        self.delineation_qrs, self.delin_weights_qrs = get_delineation_from_activation_by_mean(threshold, self.activations_qrs)
+        
+        self.activations_p = get_activations_of_group_CNN([self.cnn_i_p, self.cnn_ii_p, self.cnn_iii_p],
+                                                           [self.signals[0], self.signals[1], self.signals[2]])
+        
+        self.activations_t = get_activations_of_group_CNN([self.cnn_i_t, self.cnn_ii_t, self.cnn_iii_t],
+                                                           [self.signals[0], self.signals[1], self.signals[2]])
+        
+        self.delineation_p, self.delin_weights_p = get_delineation_from_activation_by_mean(threshold, self.activations_p)
+        self.delineation_t, self.delin_weights_t = get_delineation_from_activation_by_mean(threshold, self.activations_t)
+        
+    def find_most_confident_point(self, weights, delineation, coord_range):
+        """
+        Находит координату самой уверенной точки в заданном диапазоне.
+    
+        :param weights: Список уверенностей.
+        :param delineation: Список координат точек.
+        :param coord_range: Диапазон координат (min, max).
+        :return: Координата самой уверенной точки в диапазоне или None, если таких точек нет.
+        """
+        # Объединяем weights и delineation в список кортежей
+        combined = list(zip(weights, delineation))
+        
+        # Фильтруем точки, которые попадают в заданный диапазон
+        filtered_points = [(w, coord) for w, coord in combined if coord_range[0] <= coord <= coord_range[1]]
+        
+        # Если нет точек в диапазоне, возвращаем None
+        if not filtered_points:
+            return None
+        
+        # Сортируем по уверенности (по убыванию)
+        sorted_points = sorted(filtered_points, key=lambda x: x[0], reverse=True)
+        
+        # Возвращаем координату самой уверенной точки
+        return sorted_points[0][1]
+        
+        
+    def add_DelineationPoint_between(self, first, second, point_type, delineation):
+        
+        # Добавление на сцену DelineationPoint между двумя "отсчетами" сигнала
+        for d in delineation:
+            if (d > first) and (d < second):
+                Point = DelineationPoint(t=d/FREQUENCY,
+                                          lead_name=LEADS_NAMES.i,
+                                          point_type=point_type,
+                                          sertainty=0.5)
+                
+                id_Point = self.scene.add_object(Point)
+                
+    
+     
     def run(self):
         
-        # Шаг 1 - Получение активаций QRS на отведении I
-        activation_t = [i/FREQUENCY for i in range(5000)]
-        
-        activations_qrs_i = get_activations_of_CNN_on_signal(self.cnn_i_qrs, self.signals[0])
-                
-        activ_qrs = Activations(net_activations=activations_qrs_i,
-                            activations_t=activation_t,
+        self.get_delineation_and_weights_qrs_p_t(threshold = 0.8)
+           
+        # Добавление на сцену активаций QRS на отведении I
+        activ_qrs = Activations(net_activations=self.activations_qrs,
+                            activations_t=self.time_s,
                             color=POINTS_TYPES_COLORS[POINTS_TYPES.QRS_PEAK],
                             lead_name=LEADS_NAMES.i)
         
-        # Добавление на сцену активаций QRS на отведении I
         id1 = self.scene.add_object(activ_qrs)
         self.history.add_entry(visibles=[id1])
         
-        # Шаг 2 - Получение разметки QRS на отведении I
-        threshold = 0.8
-        delineation_qrs_i = get_delineation_from_activation_by_mean(threshold, activations_qrs_i)
-             
+       
         
-        # Шаг 3 - Получение активаций группы (отведения I, II, III) волн P и T
-                
-        activations_p_group = get_activations_of_group_CNN([self.cnn_i_p, self.cnn_ii_p, self.cnn_iii_p],
-                                                           [self.signals[0], self.signals[1], self.signals[2]])
-        
-        activations_t_group = get_activations_of_group_CNN([self.cnn_i_t, self.cnn_ii_t, self.cnn_iii_t],
-                                                           [self.signals[0], self.signals[1], self.signals[2]])
-        
-        # Шаг 4 - Получение разметки волн P и T       
-        threshold = 0.8
-        delineation_p_group = get_democracy_delineation_by_mean(threshold, activations_p_group)
-        delineation_t_group = get_democracy_delineation_by_mean(threshold, activations_t_group)
-
-
         # Первый пик R
-        firstR_delineation = delineation_qrs_i[0]
-        
+        firstR_delineation = self.delineation_qrs[0]
         firstR = DelineationPoint(t=firstR_delineation/FREQUENCY,
                                   lead_name=LEADS_NAMES.i,
                                   point_type=POINTS_TYPES.QRS_PEAK,
                                   sertainty=0.5)
         id2 = self.scene.add_object(firstR)
-
-
         self.history.add_entry(visibles=[id2], invisibles=[id1])
+        
 
         # Цикл
         
         ind = 0
-        while ind < len(delineation_qrs_i) - 1:
+        while ind < len(self.delineation_qrs) - 1:
             
             # Отображение двух соседних пиков R
-            nextR_delineation = delineation_qrs_i[ind + 1]
+            nextR_delineation = self.delineation_qrs[ind + 1]
 
-            
-            
             nextR = DelineationPoint(t=nextR_delineation/FREQUENCY,
                                       lead_name=LEADS_NAMES.i,
                                       point_type=POINTS_TYPES.QRS_PEAK,
                                       sertainty=0.5)
-            
             id3 = self.scene.add_object(nextR)
-            
             self.history.add_entry(visibles=[id3])
+            
         
             # Отображение облаков активаций группы волны T между двумя пиками R
-        
-            activ_group_t = Activations(net_activations=activations_t_group[firstR_delineation: nextR_delineation],
-                                activations_t=activation_t[firstR_delineation: nextR_delineation],
+            activ_group_t = Activations(net_activations=self.activations_t[firstR_delineation: nextR_delineation],
+                                activations_t=self.time_s[firstR_delineation: nextR_delineation],
                                 color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
                                 lead_name=LEADS_NAMES.i)   
-            
             id4 = self.scene.add_object(activ_group_t)
-            
             self.history.add_entry(visibles=[id4])
 
 
-            # Добавление на сцену DelineationPoint T_PEAK между двумя пиками R
-            for t_delin in delineation_t_group:
-                
-                if (t_delin > firstR_delineation) and (t_delin < nextR_delineation):
-                    T_PEAK_point = DelineationPoint(t=t_delin/FREQUENCY,
-                                              lead_name=LEADS_NAMES.i,
-                                              point_type=POINTS_TYPES.T_PEAK,
-                                              sertainty=0.5)
-                    
-                    id_T = self.scene.add_object(T_PEAK_point)
+            # Добавление на сцену DelineationPoint T_PEAK между двумя проставленными пиками R
+            self.add_DelineationPoint_between_object_scene(firstR_delineation, nextR_delineation,
+                                                           POINTS_TYPES.T_PEAK, self.delineation_t)
+            
+            find_most_confident_point(self, weights, delineation, coord_range)
                     
             # Поиск ближайшего справа пика T к пику R (firstR)
             nearest_delin_point_T = self.scene.get_nearest_delin_point(firstR_delineation/FREQUENCY,
@@ -144,27 +181,18 @@ class Deciser:
        
 
             # Отображение групповых активаций волны P между поставленным пиком T и R
-            activ_group_p = Activations(net_activations=activations_p_group[int(nearest_delin_point_T.t*FREQUENCY): nextR_delineation],
-                                activations_t=activation_t[int(nearest_delin_point_T.t*FREQUENCY): nextR_delineation],
+            activ_group_p = Activations(net_activations=self.activations_p[int(nearest_delin_point_T.t*FREQUENCY): nextR_delineation],
+                                activations_t=self.time_s[int(nearest_delin_point_T.t*FREQUENCY): nextR_delineation],
                                 color=POINTS_TYPES_COLORS[POINTS_TYPES.P_PEAK],
                                 lead_name=LEADS_NAMES.i)
-            
             id6 = self.scene.add_object(activ_group_p)
-            
             self.history.add_entry(visibles=[id6], invisibles=[id4])
 
         
-            # Добавление на сцену DelineationPoint P_PEAK между поставленным T и R пиком       
-            
-            for p_delin in delineation_p_group:
-                if p_delin > int(nearest_delin_point_T.t*FREQUENCY) and p_delin < nextR_delineation:
-                    
-                    P_PEAK_point = DelineationPoint(t=p_delin/FREQUENCY,
-                                              lead_name=LEADS_NAMES.i,
-                                              point_type=POINTS_TYPES.P_PEAK,
-                                              sertainty=0.5)
-                    
-                    id_P = self.scene.add_object(P_PEAK_point)
+            # Добавление на сцену DelineationPoint P_PEAK между проставленными T и R пиками   
+            self.add_DelineationPoint_between_object_scene(int(nearest_delin_point_T.t*FREQUENCY), nextR_delineation,
+                                                           POINTS_TYPES.P_PEAK, self.delineation_p)
+
                     
     
             # Поиск ближайшего слева пика P к пику R (nextR)
@@ -191,7 +219,7 @@ if __name__ == "__main__":
 
     # какие отведения хотим показать
     from settings import LEADS_NAMES, POINTS_TYPES_COLORS
-    from datasets.LUDB_utils import get_signals_by_id_several_leads_mV, get_signals_by_id_several_leads_mkV, get_LUDB_data, get_some_test_patient_id, get_test_and_train_ids
+    from datasets.LUDB_utils import get_signals_by_id_several_leads_mV, get_signals_by_id_several_leads_mkV, get_LUDB_data, get_some_test_patient_id, get_test_and_train_ids, get_signal_by_id_and_lead_mkV, get_one_lead_delineation_by_patient_id  
     leads_names =[LEADS_NAMES.i, LEADS_NAMES.ii, LEADS_NAMES.iii]
 
     LUDB_data = get_LUDB_data()
@@ -201,6 +229,7 @@ if __name__ == "__main__":
     patient_id  = test_ids[10]
     # # 6
     # 14
+
     
     signals_list_mV, leads_names_list_mV = get_signals_by_id_several_leads_mV(patient_id=patient_id, LUDB_data=LUDB_data,leads_names_list=leads_names)
     signals_list_mkV, leads_names_list_mkV = get_signals_by_id_several_leads_mkV(patient_id=patient_id, LUDB_data=LUDB_data,leads_names_list=leads_names)
@@ -211,6 +240,20 @@ if __name__ == "__main__":
 
     # scene, scene_history = create_test_scene_and_history() # их надо взять из отработавшего Deciser
     ui = UI_MainForm(leads_names=leads_names_list_mV, signals=signals_list_mV, scene=scene, scene_history=scene_history)
+    
+    
+    # model = get_appliable('BinaryDataset_1000_i_QRS_PEAK_250')
+    
+    # test_signals = []
+    # true_delinations = []
+    # for id_ in test_ids:
+    #     test_signals.append(get_signal_by_id_and_lead_mkV(id_, 'i', LUDB_data))
+    #     true_delinations.append([int(FREQUENCY*i) for i in get_one_lead_delineation_by_patient_id(id_, LUDB_data, LEADS_NAMES.i, POINTS_TYPES.QRS_PEAK)])
+        
+    # F1, mean_err = get_F1_of_one_CNN(model, test_signals, true_delinations, threshold=0.8, tolerance=25)
+   
+    # print(F1)
+    # print(mean_err)
 
 
 

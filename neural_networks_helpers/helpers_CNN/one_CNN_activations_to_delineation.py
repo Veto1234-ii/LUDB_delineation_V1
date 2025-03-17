@@ -2,8 +2,8 @@ import numpy as np
 
 def get_delineation_from_activation_by_mean(threshold, activations):
     # TODO
-    delineation = []
-    delineation_activations = []
+    delin_coords = []
+    delin_weights = []
     
     activation_cloud_y = []
     activation_cloud_x = []
@@ -22,21 +22,22 @@ def get_delineation_from_activation_by_mean(threshold, activations):
 
                 math_expectation = round(np.sum(activation_cloud_x * probabilities_norm))                   
                 
-                delineation.append(math_expectation)
-                delineation_activations.append(activations[math_expectation])
+                delin_coords.append(math_expectation)
+                
+                # максимальное значение активации внутри этого облака
+                delin_weights.append(max(activation_cloud_y))
                 
                 
                 activation_cloud_x.clear()
                 activation_cloud_y.clear()
                 
-    # np.array(coords), np.array(activations)
-    return np.array(delineation)
+    return np.array(delin_coords), np.array(delin_weights)
 
 def get_delineation_from_activation_by_max(threshold, activations):
     # TODO
     
-    delineation = []
-    delineation_activations = []
+    delin_coords = []
+    delin_weights = []
     
     activation_cloud_x = []
     activation_cloud_y = []
@@ -52,11 +53,11 @@ def get_delineation_from_activation_by_max(threshold, activations):
                 max_point_y = max(activation_cloud_y)
                 max_point_x = activation_cloud_x[activation_cloud_y.index(max_point_y)]
                 
-                delineation.append(max_point_x)
-                delineation_activations.append(max_point_y)
+                delin_coords.append(max_point_x)
+                delin_weights.append(max_point_y)
                 
                 activation_cloud_x.clear()
                 activation_cloud_y.clear()
                 
-    return np.array(delineation)
+    return np.array(delin_coords), np.array(delin_weights)
 

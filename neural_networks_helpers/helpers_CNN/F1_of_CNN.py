@@ -20,7 +20,7 @@ def get_F1_of_one_CNN(trained_CNN, signals, true_delinations, threshold, toleran
         true_delination = true_delinations[i]
         
         activations = get_activations_of_CNN_on_signal(trained_CNN, signal)
-        delineation = get_delineation_from_activation_by_mean(threshold, activations)
+        delineation, _ = get_delineation_from_activation_by_mean(threshold, activations)
                 
         program_labels = np.array([i for i in delineation if (i >= dist_border) and (i <= len(signal) - dist_border)])
         doctor_labels = np.array([i for i in true_delination if (i >= dist_border) and (i <= len(signal) - dist_border)])
@@ -73,7 +73,11 @@ def get_F1_of_one_CNN(trained_CNN, signals, true_delinations, threshold, toleran
         distance = abs(doctor_point - program_point)
         total_distance+=distance
         
-    mean_err = total_distance/len(pairs)
+    if len(pairs) != 0:
+        mean_err = total_distance/len(pairs)
+    else:
+        mean_err = None
+        
     
     return F1, mean_err
 
