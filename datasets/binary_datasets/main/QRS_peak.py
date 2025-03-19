@@ -19,7 +19,8 @@ if __name__ == "__main__":
     binary_dataset = create_dataset_from_scratch(point_name=POINTS_TYPES.QRS_PEAK,
                                                  radius=200,
                                                  lead_name=LEADS_NAMES.iii,
-                                                 LUDB_dataset=LUDB_dataset
+                                                 LUDB_dataset=LUDB_dataset,
+                                                 dataset_size=5000
                                                  )
 
     # сохраняем в файл

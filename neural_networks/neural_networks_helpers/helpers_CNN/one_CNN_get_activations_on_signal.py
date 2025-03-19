@@ -2,7 +2,7 @@ import numpy as np
 
 
 def get_activations_of_CNN_on_signal(trained_CNN, one_lead_signal):
-    # TODO
+
     signal_win_len = trained_CNN.get_win_len()
     
     activations = np.zeros(len(one_lead_signal))

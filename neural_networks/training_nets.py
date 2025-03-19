@@ -47,6 +47,6 @@ def train_bunch_of_nets():
 if __name__ == "__main__":
 
     # Обучение одной сети
-    # train_one_net(POINTS_TYPES.QRS_PEAK, LEADS_NAMES.i)
+    train_one_net(POINTS_TYPES.T_PEAK, LEADS_NAMES.i)
 
-    train_bunch_of_nets()
+    #train_bunch_of_nets()
