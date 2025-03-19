@@ -77,6 +77,5 @@ def get_F1_of_one_CNN(trained_CNN, signals, true_delinations, threshold, toleran
         mean_err = total_distance/len(pairs)
     else:
         mean_err = None
-        
     
     return F1, mean_err

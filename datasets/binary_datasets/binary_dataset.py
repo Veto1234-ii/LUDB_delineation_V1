@@ -32,4 +32,4 @@ class BinaryDataset:
         # Перемешиваем тестовые данные
         indices_test = np.random.permutation(len(self.signals_test))
         self.signals_test = self.signals_test[indices_test]
-        self.labels_test = self.labels_test[indices_test]
+        self.labels_test = [self.labels_test[i] for i in indices_test]
