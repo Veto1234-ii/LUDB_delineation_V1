@@ -7,16 +7,12 @@ class BinaryDataset:
         self.signals_test = signals_test
         self.labels_train = labels_train
         self.labels_test = labels_test
-        # # numpy массивы с обучающими данными
-        # self.dataset_test = None
-        # self.dataset_train = None
+
 
     def get_test(self):
-        # return self.dataset_test
         return self.signals_test, self.labels_test
 
     def get_train(self):
-        # return self.dataset_train
         return self.signals_train, self.labels_train
 
     def get_name(self):
