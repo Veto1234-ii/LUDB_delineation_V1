@@ -73,7 +73,10 @@ def get_F1_of_one_CNN(trained_CNN, signals, true_delinations, threshold, toleran
         distance = abs(doctor_point - program_point)
         total_distance+=distance
         
-    mean_err = total_distance/len(pairs)
+    if len(pairs) != 0:
+        mean_err = total_distance/len(pairs)
+    else:
+        mean_err = None
     
     return F1, mean_err
 

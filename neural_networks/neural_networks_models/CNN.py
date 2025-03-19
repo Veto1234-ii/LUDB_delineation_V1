@@ -1,12 +1,29 @@
+import json
+from pathlib import Path
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.optim as optim
+import os
+from datetime import datetime
+
+from neural_networks.neural_networks_helpers.helpers_CNN import get_F1_of_one_CNN
+from datasets.LUDB_utils import get_test_and_train_ids
+from datasets.LUDB_utils import get_signal_by_id_and_lead_mkV
+from settings import PATH_TO_LUDB, POINTS_TYPES
+from datasets.LUDB_utils import get_one_lead_delineation_by_patient_id
 
 
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
+
+        self.LEAD_NAME = None
+        self.POINT_TYPE = None
+        self.F1 = None
+        self.mean_err = None
+        self.input_size = 500
 
         self.sigm = nn.Sequential(
             nn.Linear(64, 8),
@@ -83,13 +100,21 @@ class CNN(nn.Module):
 
         return binvote
 
+    def add_info(self, F1, mean_err, POINT_TYPE, LEAD_NAME):
+        self.F1 = F1
+        self.mean_err = mean_err
+        self.POINT_TYPE = POINT_TYPE
+        self.LEAD_NAME = LEAD_NAME
 
-def save_model(lead, top):
-    class1 = torch.load('train_class1_' + top + '_' + lead + '_.pt', weights_only=True).float()
-    class2 = torch.load('train_class2_' + top + '_' + lead + '_.pt', weights_only=True)[:class1.size()[0]].float()
+    def get_info(self):
+        return self.F1, self.mean_err, self.input_size, self.POINT_TYPE, self.LEAD_NAME
+
+def save_model(binary_dataset, POINT_TYPE, LEAD_NAME):
+    signals_train, labels_train = binary_dataset.get_train()
+    class1 = torch.from_numpy(signals_train[labels_train == 1]).float()
+    class2 = torch.from_numpy(signals_train[labels_train == 0]).float()
 
     train_loader = DataLoader(class1, batch_size=50, shuffle=False)
-
     train_loader_2 = DataLoader(class2, batch_size=50, shuffle=False)
 
     model = CNN()
@@ -100,8 +125,11 @@ def save_model(lead, top):
 
     losses1 = []
     losses2 = []
+
+    num_epoch = 100
     # Обучение
-    for epoch in range(100):
+    model.train()
+    for epoch in range(num_epoch):
         for i, (data_batch_1, data_batch_2) in enumerate(zip(train_loader, train_loader_2)):
             optimizer.zero_grad()
             # Обучаем модель на батче из train_loader
@@ -119,8 +147,25 @@ def save_model(lead, top):
 
             optimizer.step()
 
-        print('Epoch:', epoch, 'Loss binary vote:', loss_sigm_1.item(), loss_sigm_2.item())
+        print(f"Epoch [{epoch}/{num_epoch}] Loss binary vote: {loss_sigm_1.item():.3f}, {loss_sigm_2.item():.3f}")
         losses1.append(loss_sigm_1.item())
         losses2.append(loss_sigm_2.item())
+    model.eval()
 
-    torch.save(model, f"cnn_{lead}_{top}.pth")
+    # Откроем датасет LUDB
+    path_to_dataset = Path(PATH_TO_LUDB)
+    with open(path_to_dataset, 'r') as file:
+        LUDB_data = json.load(file)
+
+    # train_id, test_id = get_test_and_train_ids(LUDB_data)
+    # test_signals = []
+    # true_delinations = []
+    # for id in test_id:
+    #     test_signals.append(get_signal_by_id_and_lead_mkV(id, LEAD_NAME, LUDB_data))
+    #     true_delinations.append([int(500*i) for i in get_one_lead_delineation_by_patient_id(id, LUDB_data, LEAD_NAME, POINT_TYPE)])
+    F1, mean_err = get_F1_of_one_CNN(model, binary_dataset.get_test()[0], binary_dataset.get_test()[1], threshold=0.8, tolerance=25)
+    model.add_info(F1, mean_err, POINT_TYPE, LEAD_NAME)
+
+    timestamp = datetime.now().strftime("%m%d_%H%M%S")
+    os.makedirs("SAVED_NETS", exist_ok=True)
+    torch.save(model, f"SAVED_NETS/{binary_dataset.get_name()}_{timestamp}.pth")
