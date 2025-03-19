@@ -1,7 +1,8 @@
 from enum import Enum
 
 # Настройки LUDB:
-PATH_TO_LUDB = 'C:\\Users\\User\\PycharmProjects\\LUDB_delineation_V1\\LUDB\\ecg_data_200.json'
+PATH_TO_LUDB = "D:\\6 семестр\\Курсовая\\ECG\\ecg_data_200.json"
+
 MAX_SIGNAL_LEN = 5000
 FREQUENCY = 500 # измерений в секунду
 
