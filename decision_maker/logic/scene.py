@@ -12,6 +12,10 @@ import matplotlib.pyplot as plt
 from math import sin
 
 class Scene:
+    """
+    Класс-хранилище для объектов разметки (точек и интервалов), расставляемых нашим основным алгоритмом разметки.
+    Типы объектов см. в пакете decision_maker.logic.scene_objects
+    """
     def __init__(self):
         self.object_id_generator = -1
 
@@ -25,6 +29,15 @@ class Scene:
         return scene_object.id
 
     def get_all_points_in_lead_sorted(self,  lead_name, point_type=None):
+        """
+        Получить все объекты класса DelineationPoint для данного типа точек в данном отведении
+        Args:
+            lead_name: имя отведения
+            point_type: тип точки или None (если None, то возвращаем точки всех видов из данного отведения)
+
+        Returns:
+            Список объектов типа DelineationPoint
+        """
         delin_points = []
         for id, obj in self.scene_objects_dict.items():
             if isinstance(obj, DelineationPoint):
@@ -35,6 +48,21 @@ class Scene:
         sorted_from_min_to_max = sorted(delin_points, key=lambda obj: abs(obj.t))
         return sorted_from_min_to_max
 
+    def get_binary_delineation_by_point_type_and_lead(self, lead_name, point_type):
+        """
+        Получить координаты точки данного типа в данном отведении
+        Args:
+            lead_name: название отведения
+            point_type: тип точки
+
+        Returns:
+            coords: список чисел, кажждое от 0 до 5000 (т.е. не в секунадах)
+        """
+        points_objects = self.get_all_points_in_lead_sorted(lead_name=lead_name, point_type=point_type)
+        coords = []
+        for point_object in points_objects:
+            coords.append(point_object.t*FREQUENCY)
+        return coords
 
     def get_nearest_delin_point(self, t, point_type,  lead_name, to_left=True):
         points_in_lead = self.get_all_points_in_lead_sorted(lead_name=lead_name, point_type=point_type)
@@ -130,11 +158,7 @@ def create_test_scene_and_history():
 
 
 if __name__ == "__main__":
-
-
-
     # Отрисуем поверх сигнала случайного пациента
-
     LUDB_data = get_LUDB_data()
     patient_id = get_some_test_patient_id()
     lead_name = LEADS_NAMES.i
