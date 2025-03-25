@@ -38,7 +38,7 @@ class Activations:
         for i in range(len(self.net_activations)):
             activation = normed_activations[i]
             t = self.activations_t[i]
-            ax.plot([t, t], [0, activation], color=self.color, alpha=0.1, linewidth=0.5)
+            ax.plot([t, t], [0, activation], color=self.color, alpha=0.3, linewidth=0.5)
 
 
 if __name__ == "__main__":

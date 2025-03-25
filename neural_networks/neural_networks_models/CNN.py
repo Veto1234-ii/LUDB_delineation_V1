@@ -169,3 +169,9 @@ def save_model(binary_dataset, POINT_TYPE, LEAD_NAME):
     timestamp = datetime.now().strftime("%m%d_%H%M%S")
     os.makedirs("SAVED_NETS", exist_ok=True)
     torch.save(model, f"SAVED_NETS/{binary_dataset.get_name()}_{timestamp}.pth")
+    
+    
+    
+
+    
+
