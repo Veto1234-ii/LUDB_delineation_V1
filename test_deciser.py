@@ -21,7 +21,7 @@ class TestReport:
     def get_mean_err_by_point_type(self):
         pass
 
-    def print(self):
+    def __str__(self):
         pass
 
 
@@ -39,7 +39,7 @@ class MainMetricsTester:
 
         self.scenes = self.get_all_scenes()
 
-         = self.deciser.what_points_we_want()
+         = self.deciser.what_points_we_want() # пока хардкодно - пики трех волн первых трех отведений.
 
         s
 
@@ -54,3 +54,14 @@ class MainMetricsTester:
         return report
 
 
+if __name__ == "__main__":
+    from datasets import get_test_and_train_ids, get_LUDB_data
+    deciser = ...# TODO Катя
+
+    LUDB_data = get_LUDB_data()
+    test_patients_ids, _ = get_test_and_train_ids(LUDB_data)
+
+    tester = MainMetricsTester(deciser, test_patients_ids)
+
+    report = tester.run()
+    print(str(report))
