@@ -1,5 +1,6 @@
 from settings import POINTS_TYPES_COLORS, DELINEATION_LINEWIDTH
 
+
 class DelineationPoint:
     def __init__(self, t, point_type, lead_name, sertainty=1):
         self.t = t
@@ -14,8 +15,9 @@ class DelineationPoint:
         ax.axvline(x=self.t, color=color, linewidth=DELINEATION_LINEWIDTH, alpha=0.5)
 
         # Отразим уровень уверенности (максимально возможный и реальный)
-        ax.scatter(self.t, y_max, marker='x',  alpha=0.5, color='black', s=10)
-        ax.scatter(self.t, self.sertainty*y_max, marker='o',  color='black', alpha=0.5,s=10)
+        ax.scatter(self.t, y_max, marker='x', alpha=0.5, color='black', s=10)
+        ax.scatter(self.t, self.sertainty * y_max, marker='o', color='black', alpha=0.5, s=10)
+
 
 if __name__ == "__main__":
     from settings import LEADS_NAMES, POINTS_TYPES
@@ -39,4 +41,3 @@ if __name__ == "__main__":
     # показываем итог: сигнал и облако активаций поверх него
     ax.legend()
     plt.show()
-
