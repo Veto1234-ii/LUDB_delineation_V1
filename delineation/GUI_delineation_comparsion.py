@@ -55,7 +55,8 @@ class GUI_DelineationComparison:
                     color=color, 
                     label=f'True {point.point_type}', 
                     marker='o', 
-                    s=50, 
+                    s=20,
+                    alpha=0.7,
                     zorder=5
                 )
             else:
@@ -115,8 +116,8 @@ if __name__ == "__main__":
 
     # выбор первых нескольких пациентов и интересующих отведений и типов точек
     patient_ids = test_patient_ids[0:10]  # первые несколько пациентов
-    lead_names = [LEADS_NAMES.i, LEADS_NAMES.ii, LEADS_NAMES.iii]
-    points_types = [POINTS_TYPES.QRS_PEAK, POINTS_TYPES.QRS_END]
+    lead_names = [LEADS_NAMES.i, LEADS_NAMES.ii]
+    points_types = [POINTS_TYPES.QRS_PEAK]
 
     patient_containers = []
 
@@ -135,12 +136,14 @@ if __name__ == "__main__":
 
                 # истинная разметка
                 point_delineation = get_one_lead_delineation_by_patient_id(patient_id, LUDB_data, lead_name=lead_name, point_type=point_type)
+                point_delineation = [x * FREQUENCY for x in point_delineation]
                 true_delineation_obj = DelineationOnePoint(point_type, lead_name, delin_coords=point_delineation, delin_weights=None)
                 true_delinations.append(true_delineation_obj)
 
                 # случайная разметка (пример для теста GUI)
-                point_delineation_random = np.random.randint(0, len(signals_list_mV[0]), 5)  # случайные координаты
-                delin_weights_random = np.random.rand(5)  # случайные веса
+                num_points = 2
+                point_delineation_random = np.random.randint(0, len(signals_list_mV[0]), num_points)  # случайные координаты
+                delin_weights_random = np.random.rand(num_points)  # случайные веса
                 our_delineation_obj = DelineationOnePoint(point_type, lead_name, delin_coords=point_delineation_random, delin_weights=delin_weights_random)
                 our_delineations.append(our_delineation_obj)
 
