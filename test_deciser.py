@@ -1,5 +1,3 @@
-from operator import index
-
 from decision_maker import Deciser, Scene, DelineationPoint
 from datasets import get_test_and_train_ids, get_LUDB_data, get_signals_by_id_several_leads_mkV, \
     get_one_lead_delineation_by_patient_id
