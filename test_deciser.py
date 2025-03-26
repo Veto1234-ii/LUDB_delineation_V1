@@ -173,7 +173,15 @@ class MainMetricsTester:
             self._register_scene_to_statistics(scene=scene, patient_id=patient_id)
 
     def _statistics_to_report(self):
-        pass  # TODO
+        report = TestReport()
+        for point_statistiscs in self.self.points_statistics:
+            F1, err = point_statistiscs.get_F1_err()
+            report._set_F1_err(F1=F1,
+                               err=err,
+                               point_type=point_statistiscs.point_type,
+                               lead_name=point_statistiscs.lead_name)
+        return report
+
 
     def run(self):
         self._fill_statistics()
