@@ -1,6 +1,7 @@
 from datasets.segmentation_datasets.segmentation_dataset_creator import create_segmentation_dataset
 from datasets.segmentation_datasets.serialization import save_segmentation_dataset_to_file, load_segmentation_dataset_from_file
-from settings import WAVES_TYPES, LEADS_NAMES, PATH_TO_LUDB
+from settings import WAVES_TYPES, LEADS_NAMES
+from paths import PATH_TO_LUDB
 
 from pathlib import Path
 import json

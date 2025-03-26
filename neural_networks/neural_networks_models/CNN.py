@@ -11,8 +11,9 @@ from datetime import datetime
 from neural_networks.neural_networks_helpers.helpers_CNN import get_F1_of_one_CNN
 from datasets.LUDB_utils import get_test_and_train_ids
 from datasets.LUDB_utils import get_signal_by_id_and_lead_mkV
-from settings import PATH_TO_LUDB, POINTS_TYPES
+from settings import POINTS_TYPES
 from datasets.LUDB_utils import get_one_lead_delineation_by_patient_id
+from paths import PATH_TO_LUDB
 
 
 class CNN(nn.Module):

@@ -1,4 +1,5 @@
-from settings import PATH_TO_LUDB, LEADS_NAMES
+from settings import LEADS_NAMES
+from paths import PATH_TO_LUDB
 
 import json
 from pathlib import Path

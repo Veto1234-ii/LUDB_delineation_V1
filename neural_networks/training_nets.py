@@ -3,7 +3,8 @@ import json
 
 from neural_networks.neural_networks_models.CNN import save_model
 from datasets.binary_datasets.binary_dataset_creator import create_dataset_from_scratch
-from settings import POINTS_TYPES, LEADS_NAMES, PATH_TO_LUDB, LEADS_NAMES_ORDERED
+from settings import POINTS_TYPES, LEADS_NAMES, LEADS_NAMES_ORDERED
+from paths import PATH_TO_LUDB
 
 
 def train_one_net(point_type, lead_name):

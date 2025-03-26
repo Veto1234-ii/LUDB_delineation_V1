@@ -10,7 +10,7 @@ def get_test_and_train_ids(LUDB_data):
 
 
 if __name__ == "__main__":
-    from settings import PATH_TO_LUDB
+    from paths import PATH_TO_LUDB
     import json
     from pathlib import Path
 
