@@ -22,11 +22,65 @@ class TestReport:
             self.leads_to_points[lead_name]={}
         self.leads_to_points[lead_name][point_type] = {'f1':F1, 'err':err}
 
-    def get_mean_F1_err_across_all_points(self):
-        #TODO
+    def get_mean_F1_across_all_points(self):
+        """ Получить  среднее F1,  дополнительно усредненное
+         по всем типам точек по всем отведениям """
+        F1_sum = 0
+        num_points = 0
+        for lead_name, lead_points_info in self.leads_to_points.items():
+            for point_type, point_info in lead_points_info.items():
+                f1 = point_info['f1']
+                F1_sum+=f1
+                num_points += 1
+        if num_points == 0:
+            return -1
+        return F1_sum/num_points
 
-    def get_point_F1_err(self, point_type):
-        # TODO
+    def get_mean_F1_across_points_of_type(self, point_type):
+        """ Получить  среднее F1 для данного типа точек (например, пик QRS),
+                дополнительно усредненно по всем отведениям,
+                где этот тип точек ставился нашим алгоритмом """
+        F1_sum = 0
+        num_points = 0
+        for lead_name, lead_points_info in self.leads_to_points.items():
+            for point_type_real, point_info in lead_points_info.items():
+                if point_type_real == point_type:
+                    f1 = point_info['f1']
+                    F1_sum += f1
+                    num_points += 1
+        if num_points == 0:
+            return -1
+        return F1_sum / num_points
+
+    def get_mean_abs_err_across_all_points(self):
+        """ Получить  среднее отклонение от правильной разметки,
+        дополнительно усредненное по всем типам точек по всем отведениям """
+        err_sum = 0
+        num_points = 0
+        for lead_name, lead_points_info in self.leads_to_points.items():
+            for point_type, point_info in lead_points_info.items():
+                err = point_info['err']
+                err_sum += err
+                num_points += 1
+        if num_points == 0:
+            return -1
+        return err_sum / num_points
+
+    def get_mean_abs_err_across_points_of_type(self):
+        """ Получить  среднее отклонение от правильной разметки,
+        для данного типа точек (например, пик QRS),
+                дополнительно усредненно по всем отведениям,
+                где этот тип точек ставился нашим алгоритмом """
+        err_sum = 0
+        num_points = 0
+        for lead_name, lead_points_info in self.leads_to_points.items():
+            for point_type, point_info in lead_points_info.items():
+                err = point_info['err']
+                err_sum += err
+                num_points += 1
+        if num_points == 0:
+            return -1
+        return err_sum / num_points
 
 
 class _PointStatistics:
@@ -141,9 +195,6 @@ if __name__ == "__main__":
 
     # Распечатываем из него важные нам вещи:
     # Средние значения метрик по всем видам точек во всех отведениях
-    F1, err = report.get_mean_F1_err_across_all_points()
-    print("По всем видам точек: F1 "+ str(F1) + ", err " + str(err))
+    F1 = report.get_mean_F1_across_all_points()
+    print("По всем видам точек: F1 "+ str(F1))
 
-    # По конкретному типу точек:
-    F1_qrs, err_qrs = report.get_point_F1_err(point_type=POINTS_TYPES.QRS_PEAK)
-    print("Пик QRS: F1 " + str(F1_qrs) + ", err " + str(err_qrs))
