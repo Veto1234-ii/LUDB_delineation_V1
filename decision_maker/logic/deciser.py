@@ -8,7 +8,7 @@ from neural_networks.neural_networks_helpers.helpers_CNN.group_CNN_get_activatio
 
 from decision_maker.logic.scene import Scene
 from decision_maker.logic.scene_history import SceneHistory
-from decision_maker import UI_MainForm
+
 
 from decision_maker.logic import DelineationPoint, DelineationInterval, SearchInterval, Activations
 
@@ -209,6 +209,7 @@ class Deciser:
 
 if __name__ == "__main__":
     from decision_maker.logic import Scene, create_test_scene_and_history
+    from decision_maker import UI_MainForm
 
     # какие отведения хотим показать
     from settings import LEADS_NAMES, POINTS_TYPES_COLORS
