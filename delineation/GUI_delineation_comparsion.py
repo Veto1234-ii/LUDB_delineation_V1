@@ -1,8 +1,12 @@
 from delineation import DelineationOnePoint
 from datasets.LUDB_utils import get_LUDB_data, get_test_and_train_ids, get_signal_by_id_and_lead_mV, get_one_lead_delineation_by_patient_id
-from settings import LEADS_NAMES, POINTS_TYPES
+from settings import LEADS_NAMES, POINTS_TYPES, POINTS_TYPES_COLORS, FREQUENCY
+from visualisation_utils.plot_one_lead_signal import plot_lead_signal_to_ax
+import matplotlib.pyplot as plt
+import numpy as np
 
 class PatientContainer:
+    
     def __init__(self, true_delinations, our_delineations, signals_list_mV, leads_names_list, patient_id='-1'):
         """
         сигнал отведений пациента + правильная разметка + наша разметка.
@@ -22,53 +26,74 @@ class PatientContainer:
         self.leads_names_list = leads_names_list
         self.patient_id = patient_id
 
-import matplotlib.pyplot as plt
-import numpy as np
-
-class GUI_DekineationComparsion:
+class GUI_DelineationComparison:
     """
-    листалка для показа того, как выглядят наша и докторская разметка на разных пациентах.
-    разметка берется только по точкам заданных типов в заданных отведениях.
+    Листалка для сравнения разметки с использованием готовой миллиметровки из plot_one_lead_signal.py
     """
     def __init__(self, patient_containers):
-
-        # инициализация листалки: хранение списка пациентов и текущего индекса
         self.patient_containers = patient_containers
         self.current_patient_index = 0
+        self.fig, self.ax = plt.subplots(
+            len(self.patient_containers[0].leads_names_list), 
+            1, 
+            figsize=(15, 10)
+        )
+        self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
+        self.update_plot()
 
-        # создание графического интерфейса с использованием matplotlib
-        self.fig, self.ax = plt.subplots(len(self.patient_containers[0].leads_names_list), 1, figsize=(10, 8))
-        self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)  # подключение обработчика клавиш
-        self.update_plot()  # обновление графика для первого пациента
+    def _plot_delineation(self, ax, signal, points, is_true_delineation=True):
+        """Отрисовка разметки с цветами по типам точек"""
+        x_values = np.arange(0, len(signal)) / FREQUENCY  # Для совместимости с plot_lead_signal_to_ax
+        
+        for point in points:
+            color = POINTS_TYPES_COLORS[point.point_type]
+            if is_true_delineation:
+                # Истинная разметка - точки
+                ax.scatter(
+                    np.array(point.delin_coords) / FREQUENCY,  # Конвертируем в секунды
+                    [signal[int(coord)] for coord in point.delin_coords],
+                    color=color, 
+                    label=f'True {point.point_type}', 
+                    marker='o', 
+                    s=50, 
+                    zorder=5
+                )
+            else:
+                # Наша разметка - вертикальные линии
+                for coord in point.delin_coords:
+                    ax.axvline(
+                        x=coord / FREQUENCY,  # Конвертируем в секунды
+                        color=color, 
+                        linestyle='--', 
+                        linewidth=1,
+                        label=f'Our {point.point_type}', 
+                        alpha=0.7, 
+                        zorder=4
+                    )
 
     def update_plot(self):
-
-        # получение данных текущего пациента
         patient = self.patient_containers[self.current_patient_index]
-
-        # отображение сигналов и разметки для каждого отведения
-        for i, lead_name in enumerate(patient.leads_names_list):
-            self.ax[i].clear()
-            signal = patient.signals_list_mV[i]
-            self.ax[i].plot(signal, label=f'Signal {lead_name}')
-            
-            # отображение правильной разметки (зеленые точки)
-            for point in patient.true_delinations:
-                if point.lead_name == lead_name:
-                    self.ax[i].scatter(point.delin_coords, [signal[int(coord)] for coord in point.delin_coords], 
-                                       color='green', label='True Delineation', zorder=5)
-            
-            # отображение нашей разметки (красные точки)
-            for point in patient.our_delineations:
-                if point.lead_name == lead_name:
-                    self.ax[i].scatter(point.delin_coords, [signal[int(coord)] for coord in point.delin_coords], 
-                                       color='red', label='Our Delineation', zorder=5)
-            
-            # добавление легенды и заголовка для каждого графика
-            self.ax[i].legend()
-            self.ax[i].set_title(f'Lead {lead_name}')
         
-        # улучшение компоновки графиков
+        for i, (lead_name, signal) in enumerate(zip(patient.leads_names_list, patient.signals_list_mV)):
+            self.ax[i].clear()
+            
+            # Используем готовый метод для миллиметровки и сигнала
+            plot_lead_signal_to_ax(signal_mV=signal, ax=self.ax[i])
+            
+            # Отрисовка разметки
+            self._plot_delineation(self.ax[i], signal, patient.true_delinations, is_true_delineation=True)
+            self._plot_delineation(self.ax[i], signal, patient.our_delineations, is_true_delineation=False)
+            
+            # Настройка легенды и заголовка
+            handles, labels = self.ax[i].get_legend_handles_labels()
+            unique_labels = dict(zip(labels, handles))  # Убираем дубли
+            self.ax[i].legend(
+                unique_labels.values(), 
+                unique_labels.keys(), 
+                loc='upper right'
+            )
+            self.ax[i].set_title(f'Patient {patient.patient_id}, Lead {lead_name}')
+
         plt.tight_layout()
         plt.draw()
 
@@ -107,7 +132,7 @@ if __name__ == "__main__":
         our_delineations = []
         for lead_name in lead_names:
             for point_type in points_types:
-                
+
                 # истинная разметка
                 point_delineation = get_one_lead_delineation_by_patient_id(patient_id, LUDB_data, lead_name=lead_name, point_type=point_type)
                 true_delineation_obj = DelineationOnePoint(point_type, lead_name, delin_coords=point_delineation, delin_weights=None)
@@ -124,5 +149,5 @@ if __name__ == "__main__":
         patient_containers.append(container)
 
     # создание и запуск листалки
-    gui = GUI_DekineationComparsion(patient_containers=patient_containers)
+    gui = GUI_DelineationComparison(patient_containers=patient_containers)
     plt.show()
