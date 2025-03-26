@@ -20,7 +20,9 @@ def load_binary_dataset_from_file(name, save_dir="SAVED_DATASETS"):
         signals_train=np.array(dataset_dict["signals_train"]),
         signals_test=np.array(dataset_dict["signals_test"]),
         labels_train=np.array(dataset_dict["labels_train"]),
-        labels_test=np.array(dataset_dict["labels_test"])
+        labels_test=np.array(dataset_dict["labels_test"]),
+        full_signals=np.array(dataset_dict["full_signals"]),
+        delineation_on_full_signals=np.array(dataset_dict["delineation_on_full_signals"])
     )
     return binary_dataset
 
@@ -38,7 +40,9 @@ def save_binary_dataset_to_file(binary_dataset, save_dir="SAVED_DATASETS"):
         "signals_train": binary_dataset.signals_train.tolist(),  # np array в список
         "signals_test": binary_dataset.signals_test.tolist(),
         "labels_train": binary_dataset.labels_train.tolist(),
-        "labels_test": binary_dataset.labels_test.tolist()
+        "labels_test": binary_dataset.labels_test.tolist(),
+        "full_signals": binary_dataset.full_signals.tolist(),
+        "delineation_on_full_signals": binary_dataset.delineation_on_full_signals.tolist()
     }
 
     filename = os.path.join(save_path, f"{binary_dataset.name}.json")
