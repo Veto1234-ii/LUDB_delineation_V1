@@ -214,10 +214,10 @@ if __name__ == "__main__":
 
 
     LUDB_data = get_LUDB_data()
-    test_patients_ids, _ = get_test_and_train_ids(LUDB_data)
+    test_patients_ids, train_patients_ids = get_test_and_train_ids(LUDB_data)
     deciser = Deciser()
     leads_names = [LEADS_NAMES.i, LEADS_NAMES.ii, LEADS_NAMES.iii]
-    tester = MainMetricsTester(test_patients_ids[0:15], LUDB_data, deciser=deciser, leads_names=leads_names)
+    tester = MainMetricsTester(train_patients_ids[10:20], LUDB_data, deciser=deciser, leads_names=leads_names)
 
     # Получаем объект отчета о тестировани, содержаший посчитаннные метрики
     # качества нашего алгоритма на данном тестовом множестве пациента:

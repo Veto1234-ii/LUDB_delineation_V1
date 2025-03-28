@@ -95,8 +95,9 @@ def print_table(df):
         print("|" + "|".join(row_data) + "|")
 
 if __name__ == "__main__":
-    folder_path = "../SAVED_NETS"
-    table = run(folder_path)
+    from paths import SAVED_NETS_PATH
+
+    table = run(SAVED_NETS_PATH)
 
     # Сортируем таблицу по F1
     table = table.sort_values(by="F1", ascending=False)
