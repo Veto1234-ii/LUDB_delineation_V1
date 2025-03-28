@@ -1,6 +1,7 @@
+from settings import TOLERANCE
 import numpy as np
 
-def get_F1(true_delinations, our_delinations, tolerance, len_signal):
+def get_F1(true_delinations, our_delinations, len_signal):
     pairs = []
 
     TP = 0
@@ -37,7 +38,7 @@ def get_F1(true_delinations, our_delinations, tolerance, len_signal):
 
             for program_point in available_program_labels:
                 distance = abs(program_point - doctor_point)
-                if distance <= tolerance and distance < min_distance:
+                if distance <= TOLERANCE and distance < min_distance:
                     min_distance = distance
                     closest_point = program_point
 

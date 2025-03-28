@@ -164,7 +164,7 @@ def save_model(binary_dataset, POINT_TYPE, LEAD_NAME):
     # for id in test_id:
     #     test_signals.append(get_signal_by_id_and_lead_mkV(id, LEAD_NAME, LUDB_data))
     #     true_delinations.append([int(500*i) for i in get_one_lead_delineation_by_patient_id(id, LUDB_data, LEAD_NAME, POINT_TYPE)])
-    F1, mean_err = get_F1_of_one_CNN(model, binary_dataset.get_test()[0], binary_dataset.get_test()[1], threshold=0.8, tolerance=25)
+    F1, mean_err = get_F1_of_one_CNN(model, binary_dataset.get_test()[0], binary_dataset.get_test()[1], threshold=0.8)
     model.add_info(F1, mean_err, POINT_TYPE, LEAD_NAME)
 
     timestamp = datetime.now().strftime("%m%d_%H%M%S")

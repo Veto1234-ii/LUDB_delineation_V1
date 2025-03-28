@@ -1,9 +1,11 @@
 from .one_CNN_get_activations_on_signal import get_activations_of_CNN_on_signal
 from .one_CNN_activations_to_delineation import get_delineation_from_activation_by_mean
+from settings import TOLERANCE
+
 import numpy as np
 
 
-def get_F1_of_one_CNN(trained_CNN, signals, true_delinations, threshold, tolerance):
+def get_F1_of_one_CNN(trained_CNN, signals, true_delinations, threshold):
     """ signals - сигналы одно и того же отведения, разных пациентов"""
     
     pairs = []
@@ -43,7 +45,7 @@ def get_F1_of_one_CNN(trained_CNN, signals, true_delinations, threshold, toleran
 
             for program_point in available_program_labels:
                 distance = abs(program_point - doctor_point)
-                if distance <= tolerance and distance < min_distance:
+                if distance <= TOLERANCE and distance < min_distance:
                     min_distance = distance
                     closest_point = program_point
 

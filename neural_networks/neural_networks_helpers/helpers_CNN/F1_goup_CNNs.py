@@ -1,8 +1,9 @@
 from .group_CNN_get_activations_on_signals import get_activations_of_group_CNN
 from .group_CNN_to_delineation import get_democracy_delineation_by_mean
+from settings import TOLERANCE
 import numpy as np
 
-def get_F1_of_group_CNN(trained_CNNs, signals, true_delinations, threshold, tolerance):
+def get_F1_of_group_CNN(trained_CNNs, signals, true_delinations, threshold):
     """ signals - сигналы 12-ти отведений разных пациентов"""
     """ true_delinations - DocDelineation I отведения"""
     pairs = []
@@ -43,7 +44,7 @@ def get_F1_of_group_CNN(trained_CNNs, signals, true_delinations, threshold, tole
 
             for program_point in available_program_labels:
                 distance = abs(program_point - doctor_point)
-                if distance <= tolerance and distance < min_distance:
+                if distance <= TOLERANCE and distance < min_distance:
                     min_distance = distance
                     closest_point = program_point
 
