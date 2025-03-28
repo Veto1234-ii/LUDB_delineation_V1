@@ -162,6 +162,8 @@ class MainMetricsTester:
                 F1, err = get_F1(true_delinations=[true_coords],
                          our_delinations=[our_coords],
                          len_signal=MAX_SIGNAL_LEN)
+                if err is None:
+                    err = -1
                 log_str+=f"                 {point_type}: F1= {F1:.2f}, err ={err:.2f}   "
 
         print(log_str)
