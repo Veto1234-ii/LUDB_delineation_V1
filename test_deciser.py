@@ -117,9 +117,10 @@ class MainMetricsTester:
         self.test_patients_ids = test_patients_ids
 
         self.points_we_want = {LEADS_NAMES.i: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK],
-                               LEADS_NAMES.ii: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK],
-                               LEADS_NAMES.iii: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK,
-                                                 POINTS_TYPES.T_PEAK]}  # TODO из Deciser, если Катя написала в нем соотв. метод
+                               LEADS_NAMES.ii: [], #[POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK],
+                               LEADS_NAMES.iii: [] #POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK,
+                                                 #POINTS_TYPES.T_PEAK]
+        }  # TODO из Deciser, если Катя написала в нем соотв. метод
 
         self.LUDB_data = LUDB_data
 
@@ -164,15 +165,15 @@ class MainMetricsTester:
                                                                       LUDB_data=LUDB_data,
                                                                       leads_names_list=leads_names)
             # создаем экземпляр нашего алгоритма разметки
-            deciser = Deciser(leads_names=leads_names, signals=signals_list_mkV)
+            deciser = Deciser()
 
             # генерируем разметку нашим алгоритмом - получаем заполненную сцену для данного пациента
-            scene, _ = deciser.run()
+            scene, _ = deciser.run(leads_names=leads_names, signals=signals_list_mkV)
             self._register_scene_to_statistics(scene=scene, patient_id=patient_id)
 
     def _statistics_to_report(self):
         report = TestReport()
-        for point_statistiscs in self.self.points_statistics:
+        for point_statistiscs in self.points_statistics_list:
             F1, err = point_statistiscs.get_F1_err()
             report._set_F1_err(F1=F1,
                                err=err,
@@ -193,7 +194,7 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
     test_patients_ids, _ = get_test_and_train_ids(LUDB_data)
 
-    tester = MainMetricsTester(test_patients_ids, LUDB_data)
+    tester = MainMetricsTester(test_patients_ids[0:2], LUDB_data)
 
     # Получаем объект отчета о тестировани, содержаший посчитаннные метрики
     # качества нашего алгоритма на данном тестовом множестве пациента:

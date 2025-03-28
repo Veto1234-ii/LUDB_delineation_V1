@@ -1,6 +1,6 @@
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
-from settings import FREQUENCY, LEADS_NAMES, POINTS_TYPES, WAVES_TYPES,  MAX_SIGNAL_LEN
+from settings import FREQUENCY, LEADS_NAMES, POINTS_TYPES, WAVES_TYPES,  MAX_SIGNAL_LEN, POINTS_TYPES_COLORS
 
 from neural_networks.neural_networks_helpers import (get_delineation_from_activation_by_mean,
                                                      get_delineation_from_activation_by_extremum_signal,
@@ -8,13 +8,14 @@ from neural_networks.neural_networks_helpers import (get_delineation_from_activa
                                                      get_activations_of_CNN_on_signal)
 
 from neural_networks import CNN, load_best_net, get_appliable
+from decision_maker.logic import Scene, SceneHistory, Activations, DelineationPoint, DelineationInterval, SearchInterval
 
 
 
 class Deciser:
-    def __init__(self, signals,  leads_names):
-        self.signals = signals
-        self.leads_names = leads_names
+    def __init__(self):
+        self.signals = None
+        self.leads_names = None
 
         self.scene = Scene() # Пустая сцена
         self.history = SceneHistory() # Пустая история
@@ -66,7 +67,7 @@ class Deciser:
         self.delineation_iii_t, self.delin_weights_iii_t = None, None        
         
         
-        self.get_delineation_and_weights_qrs_p_t(threshold = 0.2)
+
         
         self.radius_evidence = 10
         self.threshold_evidence_qrs = 0.5
@@ -262,8 +263,11 @@ class Deciser:
         
         return result_delineation_qrs, result_evidence_qrs, result_delineation_p, result_evidence_p, result_delineation_t, result_evidence_t
     
-    def run(self):
-        
+    def run(self, signals,  leads_names):
+        self.signals = signals
+        self.leads_names = leads_names
+
+        self.get_delineation_and_weights_qrs_p_t(threshold=0.2)
         
         result_delineation_qrs, result_evidence_qrs, result_delineation_p, result_evidence_p, result_delineation_t, result_evidence_t = self.get_candidate_points()
 
@@ -368,8 +372,8 @@ if __name__ == "__main__":
     signals_list_mkV, leads_names_list_mkV = get_signals_by_id_several_leads_mkV(patient_id=patient_id, LUDB_data=LUDB_data,leads_names_list=leads_names)
 
 
-    deciser = Deciser(signals=signals_list_mkV,  leads_names=leads_names_list_mkV)
-    scene, scene_history = deciser.run()
+    deciser = Deciser()
+    scene, scene_history = deciser.run(signals=signals_list_mkV,  leads_names=leads_names_list_mkV)
 
     # scene, scene_history = create_test_scene_and_history() # их надо взять из отработавшего Deciser
     ui = UI_MainForm(leads_names=leads_names_list_mV, signals=signals_list_mV, scene=scene, scene_history=scene_history)
