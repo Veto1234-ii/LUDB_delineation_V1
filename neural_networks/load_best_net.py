@@ -1,9 +1,9 @@
 import os
-
+from paths import SAVED_NETS_PATH
 import torch
 
 def load_best_net(point_type, lead_name):
-    folder_path = "SAVED_NETS"
+    folder_path = SAVED_NETS_PATH
     F1_max = 0
     best_net = ''
 

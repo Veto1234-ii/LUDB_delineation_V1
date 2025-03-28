@@ -1,15 +1,13 @@
+import os
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 from settings import FREQUENCY, LEADS_NAMES, POINTS_TYPES, WAVES_TYPES,  MAX_SIGNAL_LEN
-from neural_networks.neural_networks_helpers import get_appliable
 
-from neural_networks.neural_networks_helpers.helpers_CNN.one_CNN_get_activations_on_signal import get_activations_of_CNN_on_signal
-from neural_networks.neural_networks_helpers.helpers_CNN.one_CNN_activations_to_delineation import get_delineation_from_activation_by_mean, get_delineation_from_activation_by_extremum_signal
+from neural_networks.neural_networks_helpers import (get_delineation_from_activation_by_mean,
+                                                     get_delineation_from_activation_by_extremum_signal,
+                                                     get_activations_of_group_CNN,
+                                                     get_activations_of_CNN_on_signal)
 
-from neural_networks.neural_networks_helpers.helpers_CNN.group_CNN_get_activations_on_signals import get_activations_of_group_CNN
-
-
-from neural_networks.neural_networks_models import CNN
-
-from neural_networks.load_best_net import load_best_net
+from neural_networks import CNN, load_best_net, get_appliable
 
 
 

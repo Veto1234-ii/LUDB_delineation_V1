@@ -1,1 +1,4 @@
 from .F1_of_CNN import get_F1_of_one_CNN
+from .one_CNN_activations_to_delineation import get_delineation_from_activation_by_mean, get_delineation_from_activation_by_extremum_signal
+from .one_CNN_get_activations_on_signal import get_activations_of_CNN_on_signal
+from .group_CNN_get_activations_on_signals import  get_activations_of_group_CNN

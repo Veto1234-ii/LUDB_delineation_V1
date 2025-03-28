@@ -22,7 +22,8 @@ if __name__ == "__main__":
                                                  LUDB_dataset=LUDB_dataset,
                                                  dataset_size=5000
                                                  )
-    binary_dataset.add_jitter(num_of_jitter_examples=200, jitter_range=(50, 29, -10))
+    step = 10
+    binary_dataset.add_jitter(num_of_jitter_examples=200, jitter_range=(50, 29, -step))  # 1 - 2000
 
     # сохраняем в файл
     #name = binary_dataset.get_name()

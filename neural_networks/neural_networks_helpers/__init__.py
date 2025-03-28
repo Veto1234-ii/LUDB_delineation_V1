@@ -1,1 +1,2 @@
 from .load_network import get_appliable
+from .helpers_CNN import get_delineation_from_activation_by_mean,get_delineation_from_activation_by_extremum_signal,get_activations_of_CNN_on_signal,get_activations_of_group_CNN
