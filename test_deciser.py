@@ -1,10 +1,12 @@
 from decision_maker import Deciser, Scene, DelineationPoint
 from datasets import get_test_and_train_ids, get_LUDB_data, get_signals_by_id_several_leads_mkV, \
     get_one_lead_delineation_by_patient_id
-from settings import LEADS_NAMES_ORDERED, LEADS_NAMES, POINTS_TYPES, MAX_SIGNAL_LEN
+from settings import LEADS_NAMES_ORDERED, LEADS_NAMES, POINTS_TYPES, MAX_SIGNAL_LEN, FREQUENCY
 from decision_maker import Deciser, Scene
 from delineation import get_F1
 
+import sys
+import io
 
 class TestReport:
     """
@@ -64,7 +66,7 @@ class TestReport:
             return -1
         return err_sum / num_points
 
-    def get_mean_abs_err_across_points_of_type(self):
+    def get_mean_abs_err_across_points_of_type(self, point_type):
         """ Получить  среднее отклонение от правильной разметки,
         для данного типа точек (например, пик QRS),
                 дополнительно усредненно по всем отведениям,
@@ -72,13 +74,17 @@ class TestReport:
         err_sum = 0
         num_points = 0
         for lead_name, lead_points_info in self.leads_to_points.items():
-            for point_type, point_info in lead_points_info.items():
-                err = point_info['err']
-                err_sum += err
-                num_points += 1
+            for point_type_real, point_info in lead_points_info.items():
+                if point_type_real == point_type:
+                    err = point_info['err']
+                    err_sum += err
+                    num_points += 1
         if num_points == 0:
             return -1
         return err_sum / num_points
+
+
+
 
 
 class _PointStatistics:
@@ -145,10 +151,11 @@ class MainMetricsTester:
                                                                                  point_type)  # dвремя не в секундах
 
                 # вытаскиваем верную разметку этой точки в этом отведении
-                true_coords = get_one_lead_delineation_by_patient_id(patient_id=patient_id,
+                true_coords_in_seconds = get_one_lead_delineation_by_patient_id(patient_id=patient_id,
                                                                      LUDB_data=self.LUDB_data,
                                                                      lead_name=lead_name,
                                                                      point_type=point_type)
+                true_coords = [true_coords_in_seconds[i]* FREQUENCY for i in range(len(true_coords_in_seconds))]
 
                 index_of_stat_entry = self._get_entry_index(lead_name, point_type)
                 self.points_statistics_list[index_of_stat_entry].add_patient_entry(patient_id=patient_id,
@@ -165,10 +172,16 @@ class MainMetricsTester:
                                                                       LUDB_data=LUDB_data,
                                                                       leads_names_list=leads_names)
             # создаем экземпляр нашего алгоритма разметки
-            deciser = Deciser()
+
+            # Подавление вывода
+            original_stdout = sys.stdout  # Сохраняем оригинальный stdout
+            sys.stdout = io.StringIO()  # Перенаправляем в "никуда"
 
             # генерируем разметку нашим алгоритмом - получаем заполненную сцену для данного пациента
+            deciser = Deciser()
             scene, _ = deciser.run(leads_names=leads_names, signals=signals_list_mkV)
+            sys.stdout = original_stdout  # Восстанавливаем stdout
+
             self._register_scene_to_statistics(scene=scene, patient_id=patient_id)
 
     def _statistics_to_report(self):
@@ -191,6 +204,7 @@ class MainMetricsTester:
 if __name__ == "__main__":
     from datasets import get_test_and_train_ids, get_LUDB_data
 
+
     LUDB_data = get_LUDB_data()
     test_patients_ids, _ = get_test_and_train_ids(LUDB_data)
 
@@ -201,7 +215,22 @@ if __name__ == "__main__":
     report = tester.run()
 
     # Распечатываем из него важные нам вещи:
+
     # Средние значения метрик по всем видам точек во всех отведениях
     F1 = report.get_mean_F1_across_all_points()
-    print("По всем видам точек: F1 "+ str(F1))
+    err = report.get_mean_abs_err_across_all_points()
+    print(f"По всем видам точек: F1 = {F1:.2f} , err = {err:.2}")
+
+    # Средние значения метрик по всем видам точек поотдельности (но с устреднением по отведениям)
+    p1 = report.get_mean_F1_across_points_of_type(point_type=POINTS_TYPES.P_PEAK)
+    p2 = report.get_mean_F1_across_points_of_type(point_type=POINTS_TYPES.QRS_PEAK)
+    p3 = report.get_mean_F1_across_points_of_type(point_type=POINTS_TYPES.T_PEAK)
+
+    print(f"Подробнее F1: P_PEAK {p1:.2f}, QRS_PEAK { p2:.2f}, T_PEAK {p3:.2f}")
+
+    e1 = report.get_mean_abs_err_across_points_of_type(point_type=POINTS_TYPES.P_PEAK)
+    e2 = report.get_mean_abs_err_across_points_of_type(point_type=POINTS_TYPES.QRS_PEAK)
+    e3 = report.get_mean_abs_err_across_points_of_type(point_type=POINTS_TYPES.T_PEAK)
+
+    print(f"Подробнее err: P_PEAK {e1:.2f}, QRS_PEAK {e2:.2f}, T_PEAK {e3:.2f}")
 
