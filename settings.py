@@ -2,7 +2,7 @@ from enum import Enum
 
 MAX_SIGNAL_LEN = 5000
 FREQUENCY = 500 # измерений в секунду
-TOLERANCE = 50 # радиус вокруг докторской точки (если наша попала в этот радиус, то она кандидат на соответсвие этой докторской точке)
+TOLERANCE = 75 # радиус вокруг докторской точки (если наша попала в этот радиус, то она кандидат на соответсвие этой докторской точке)
 
 # Переменные, связанные с отведениями:
 class LeadsNames:
@@ -52,6 +52,20 @@ POINTS_TYPES_COLORS = {
     POINTS_TYPES.P_START : '#711142',
     POINTS_TYPES.P_PEAK : '#714442'
     }
+
+POINTS_TYPES_STR_NAMES ={
+    POINTS_TYPES.T_START: 'начало Т',
+    POINTS_TYPES.T_PEAK: 'пик Т',
+    POINTS_TYPES.T_END: 'конец Т',
+
+    POINTS_TYPES.QRS_PEAK : 'пик QRS',
+    POINTS_TYPES.QRS_END : 'конец QRS',
+    POINTS_TYPES.QRS_START : 'начало QRS',
+
+    POINTS_TYPES.P_END : 'конец P',
+    POINTS_TYPES.P_START : 'начало Р',
+    POINTS_TYPES.P_PEAK : 'пик Р'
+}
 
 # Переменные, связанные с целыми волнами/сегментами
 class WavesTypes:

@@ -1,7 +1,7 @@
 from decision_maker import Deciser, Scene, DelineationPoint
 from datasets import get_test_and_train_ids, get_LUDB_data, get_signals_by_id_several_leads_mkV, \
     get_one_lead_delineation_by_patient_id
-from settings import LEADS_NAMES_ORDERED, LEADS_NAMES, POINTS_TYPES, MAX_SIGNAL_LEN, FREQUENCY, TOLERANCE
+from settings import LEADS_NAMES_ORDERED, LEADS_NAMES, POINTS_TYPES, MAX_SIGNAL_LEN, FREQUENCY, TOLERANCE, POINTS_TYPES_STR_NAMES
 from decision_maker import Deciser, Scene
 from delineation import get_F1
 
@@ -164,7 +164,7 @@ class MainMetricsTester:
                          len_signal=MAX_SIGNAL_LEN)
                 if err is None:
                     err = -1
-                log_str+=f"                 {point_type}: F1= {F1:.2f}, err ={err:.2f}   "
+                log_str+=f"                 {POINTS_TYPES_STR_NAMES[point_type]}: F1= {F1:.2f}, err ={err:.2f}   "
 
         print(log_str)
 
@@ -228,18 +228,18 @@ if __name__ == "__main__":
     # Средние значения метрик по всем видам точек во всех отведениях
     F1 = report.get_mean_F1_across_all_points()
     err = report.get_mean_abs_err_across_all_points()
-    print(f"По всем видам точек: F1 = {F1:.2f} , err = {err:.2}")
+    print(f"              среднее по всем видам точек:  F1 = {F1:.2f} , err = {err:.2f}")
 
     # Средние значения метрик по всем видам точек поотдельности (но с устреднением по отведениям)
     p1 = report.get_mean_F1_across_points_of_type(point_type=POINTS_TYPES.P_PEAK)
     p2 = report.get_mean_F1_across_points_of_type(point_type=POINTS_TYPES.QRS_PEAK)
     p3 = report.get_mean_F1_across_points_of_type(point_type=POINTS_TYPES.T_PEAK)
 
-    print(f"Подробнее F1: P_PEAK {p1:.2f}, QRS_PEAK { p2:.2f}, T_PEAK {p3:.2f}")
+    print(f"              F1: пик P {p1:.2f}, пик QRS { p2:.2f}, пик T {p3:.2f}")
 
     e1 = report.get_mean_abs_err_across_points_of_type(point_type=POINTS_TYPES.P_PEAK)
     e2 = report.get_mean_abs_err_across_points_of_type(point_type=POINTS_TYPES.QRS_PEAK)
     e3 = report.get_mean_abs_err_across_points_of_type(point_type=POINTS_TYPES.T_PEAK)
 
-    print(f"Подробнее err: P_PEAK {e1:.2f}, QRS_PEAK {e2:.2f}, T_PEAK {e3:.2f}")
+    print(f"             Подробнее err: пик Р {e1:.2f}, пик QRS {e2:.2f}, пик T {e3:.2f}")
 
