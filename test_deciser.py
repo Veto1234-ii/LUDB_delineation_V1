@@ -121,8 +121,7 @@ class MainMetricsTester:
         self.deciser = deciser
         print (f"Кол-во тестовых пациентов {len(self.test_patients_ids)}")
 
-        self.points_we_want = {LEADS_NAMES.i: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK]
-        }  # TODO из Deciser, если Катя написала в нем соотв. метод
+        self.points_we_want = self.deciser.what_points_we_want()  # TODO из Deciser, если Катя написала в нем соотв. метод
 
         self.LUDB_data = LUDB_data
 
@@ -185,12 +184,15 @@ class MainMetricsTester:
 
             # генерируем разметку нашим алгоритмом - получаем заполненную сцену для данного пациента
             scene, history = self.deciser.run(leads_names=self.leads_names, signals=signals_list_mkV)
-
+            
+            
             sys.stdout = original_stdout  # Восстанавливаем stdout
 
             self._register_scene_to_statistics(scene=scene, patient_id=patient_id)
+            
             del scene
             del history
+            self.deciser.clear_scene()
 
     def _statistics_to_report(self):
         report = TestReport()
