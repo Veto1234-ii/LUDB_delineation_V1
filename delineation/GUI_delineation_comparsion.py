@@ -41,62 +41,61 @@ class GUI_DelineationComparison:
         self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
         self.update_plot()
 
-    def _plot_delineation(self, ax, signal, points, is_true_delineation=True):
-        """Отрисовка разметки с цветами по типам точек"""
-        x_values = np.arange(0, len(signal)) / FREQUENCY  # Для совместимости с plot_lead_signal_to_ax
-        
-        for point in points:
-            color = POINTS_TYPES_COLORS[point.point_type]
-            if is_true_delineation:
-                # Истинная разметка - точки
-                ax.scatter(
-                    np.array(point.delin_coords) / FREQUENCY,  # Конвертируем в секунды
-                    [signal[int(coord)] for coord in point.delin_coords],
-                    color=color, 
-                    label=f'True {point.point_type}', 
-                    marker='o', 
-                    s=20,
-                    alpha=0.7,
-                    zorder=5
-                )
-            else:
-                # Наша разметка - вертикальные линии
-                for coord in point.delin_coords:
-                    ax.axvline(
-                        x=coord / FREQUENCY,  # Конвертируем в секунды
-                        color=color, 
-                        linestyle='--', 
-                        linewidth=1,
-                        label=f'Our {point.point_type}', 
-                        alpha=0.7, 
-                        zorder=4
-                    )
-
-    def update_plot(self):
-        patient = self.patient_containers[self.current_patient_index]
-        
-        for i, (lead_name, signal) in enumerate(zip(patient.leads_names_list, patient.signals_list_mV)):
-            self.ax[i].clear()
-            
-            # Используем готовый метод для миллиметровки и сигнала
-            plot_lead_signal_to_ax(signal_mV=signal, ax=self.ax[i])
-            
-            # Отрисовка разметки
-            self._plot_delineation(self.ax[i], signal, patient.true_delinations, is_true_delineation=True)
-            self._plot_delineation(self.ax[i], signal, patient.our_delineations, is_true_delineation=False)
-            
-            # Настройка легенды и заголовка
-            handles, labels = self.ax[i].get_legend_handles_labels()
-            unique_labels = dict(zip(labels, handles))  # Убираем дубли
-            self.ax[i].legend(
-                unique_labels.values(), 
-                unique_labels.keys(), 
-                loc='upper right'
+def _plot_delineation(self, ax, signal, points, lead_name, is_true_delineation=True):
+    """Отрисовка разметки с цветами по типам точек"""
+    x_values = np.arange(0, len(signal)) / FREQUENCY
+    
+    # Фильтруем точки только для текущего отведения
+    points_for_lead = [p for p in points if p.lead_name == lead_name]
+    
+    for point in points_for_lead:
+        color = POINTS_TYPES_COLORS[point.point_type]
+        if is_true_delineation:
+            ax.scatter(
+                np.array(point.delin_coords) / FREQUENCY,
+                [signal[int(coord)] for coord in point.delin_coords],
+                color=color, 
+                label=f'True {point.point_type}', 
+                marker='o', 
+                s=20,
+                alpha=0.7,
+                zorder=5
             )
-            self.ax[i].set_title(f'Patient {patient.patient_id}, Lead {lead_name}')
+        else:
+            for coord in point.delin_coords:
+                ax.axvline(
+                    x=coord / FREQUENCY,
+                    color=color, 
+                    linestyle='--', 
+                    linewidth=1,
+                    label=f'Our {point.point_type}', 
+                    alpha=0.7, 
+                    zorder=4
+                )
 
-        plt.tight_layout()
-        plt.draw()
+def update_plot(self):
+    patient = self.patient_containers[self.current_patient_index]
+    
+    for i, (lead_name, signal) in enumerate(zip(patient.leads_names_list, patient.signals_list_mV)):
+        self.ax[i].clear()
+        
+        plot_lead_signal_to_ax(signal_mV=signal, ax=self.ax[i])
+        
+        # Передаем текущее имя отведения в метод отрисовки
+        self._plot_delineation(self.ax[i], signal, patient.true_delinations, lead_name, is_true_delineation=True)
+        self._plot_delineation(self.ax[i], signal, patient.our_delineations, lead_name, is_true_delineation=False)
+        
+        handles, labels = self.ax[i].get_legend_handles_labels()
+        unique_labels = dict(zip(labels, handles))
+        self.ax[i].legend(
+            unique_labels.values(), 
+            unique_labels.keys(), 
+            loc='upper right'
+        )
+        self.ax[i].set_title(f'Patient {patient.patient_id}, Lead {lead_name}')
+
+    plt.tight_layout()
+    plt.draw()
 
     def on_key_press(self, event):
 
