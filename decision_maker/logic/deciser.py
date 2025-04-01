@@ -75,8 +75,16 @@ class Deciser:
         self.threshold_evidence_t = 0.2
 
         
-        
+    def clear_scene(self):
+        self.scene.scene_objects_dict.clear()
+        self.history.visibles_groups.clear()
+        self.history.invisibles_groups.clear()
 
+        
+        
+    def what_points_we_want(self):
+        return {LEADS_NAMES.i: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK]}
+        
     def get_delineation_and_weights_qrs_p_t(self, threshold):
         
         # QRS
@@ -185,14 +193,11 @@ class Deciser:
         result_evidence = []
         ids = []
         
-        print()
-        print(f'{wave_type}, {main_lead}')
-        print(main_delineation)
+       
 
         
         # Фильтруем по порогу threshold_evidence
         for coord, avg_weight in average_confidence.items():
-            print(f"Coordinate: {coord}, Evidence: {avg_weight:.2f}")
 
             if avg_weight >= threshold_evidence:
                 result_delineation.append(coord)
@@ -241,7 +246,6 @@ class Deciser:
         result_evidence_t.extend(result_evidence_t_ii)
         result_evidence_t.extend(result_evidence_t_iii)
 
-        print(result_delineation_t)
         
         
         # Пик P
@@ -259,7 +263,6 @@ class Deciser:
         result_evidence_p.extend(result_evidence_p_ii)
         result_evidence_p.extend(result_evidence_p_iii)
         
-        print(result_delineation_p)
         
         return result_delineation_qrs, result_evidence_qrs, result_delineation_p, result_evidence_p, result_delineation_t, result_evidence_t
     
@@ -340,6 +343,7 @@ class Deciser:
             
             firstR_delineation = nextR_delineation
             
+            
         
         return self.scene, self.history
 
@@ -362,7 +366,9 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
     
     train_ids, test_ids = get_test_and_train_ids(LUDB_data)
-    patient_id  = test_ids[26]
+    patient_id  = test_ids[14]
+    
+    print(patient_id)
     # 15
     # 4
     # 12
@@ -374,7 +380,7 @@ if __name__ == "__main__":
 
     deciser = Deciser()
     scene, scene_history = deciser.run(signals=signals_list_mkV,  leads_names=leads_names_list_mkV)
-
+    
     # scene, scene_history = create_test_scene_and_history() # их надо взять из отработавшего Deciser
     ui = UI_MainForm(leads_names=leads_names_list_mV, signals=signals_list_mV, scene=scene, scene_history=scene_history)
     
