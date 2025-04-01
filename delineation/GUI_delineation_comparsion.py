@@ -41,61 +41,61 @@ class GUI_DelineationComparison:
         self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
         self.update_plot()
 
-def _plot_delineation(self, ax, signal, points, lead_name, is_true_delineation=True):
-    """Отрисовка разметки с цветами по типам точек"""
-    x_values = np.arange(0, len(signal)) / FREQUENCY
-    
-    # Фильтруем точки только для текущего отведения
-    points_for_lead = [p for p in points if p.lead_name == lead_name]
-    
-    for point in points_for_lead:
-        color = POINTS_TYPES_COLORS[point.point_type]
-        if is_true_delineation:
-            ax.scatter(
-                np.array(point.delin_coords) / FREQUENCY,
-                [signal[int(coord)] for coord in point.delin_coords],
-                color=color, 
-                label=f'True {point.point_type}', 
-                marker='o', 
-                s=20,
-                alpha=0.7,
-                zorder=5
-            )
-        else:
-            for coord in point.delin_coords:
-                ax.axvline(
-                    x=coord / FREQUENCY,
-                    color=color, 
-                    linestyle='--', 
-                    linewidth=1,
-                    label=f'Our {point.point_type}', 
-                    alpha=0.7, 
-                    zorder=4
+    def _plot_delineation(self, ax, signal, points, lead_name, is_true_delineation=True):
+        """Отрисовка разметки с цветами по типам точек"""
+        x_values = np.arange(0, len(signal)) / FREQUENCY
+
+        # Фильтруем точки только для текущего отведения
+        points_for_lead = [p for p in points if p.lead_name == lead_name]
+
+        for point in points_for_lead:
+            color = POINTS_TYPES_COLORS[point.point_type]
+            if is_true_delineation:
+                ax.scatter(
+                    np.array(point.delin_coords) / FREQUENCY,
+                    [signal[int(coord)] for coord in point.delin_coords],
+                    color=color,
+                    label=f'True {point.point_type}',
+                    marker='o',
+                    s=20,
+                    alpha=0.7,
+                    zorder=5
                 )
+            else:
+                for coord in point.delin_coords:
+                    ax.axvline(
+                        x=coord / FREQUENCY,
+                        color=color,
+                        linestyle='--',
+                        linewidth=1,
+                        label=f'Our {point.point_type}',
+                        alpha=0.7,
+                        zorder=4
+                    )
 
-def update_plot(self):
-    patient = self.patient_containers[self.current_patient_index]
-    
-    for i, (lead_name, signal) in enumerate(zip(patient.leads_names_list, patient.signals_list_mV)):
-        self.ax[i].clear()
-        
-        plot_lead_signal_to_ax(signal_mV=signal, ax=self.ax[i])
-        
-        # Передаем текущее имя отведения в метод отрисовки
-        self._plot_delineation(self.ax[i], signal, patient.true_delinations, lead_name, is_true_delineation=True)
-        self._plot_delineation(self.ax[i], signal, patient.our_delineations, lead_name, is_true_delineation=False)
-        
-        handles, labels = self.ax[i].get_legend_handles_labels()
-        unique_labels = dict(zip(labels, handles))
-        self.ax[i].legend(
-            unique_labels.values(), 
-            unique_labels.keys(), 
-            loc='upper right'
-        )
-        self.ax[i].set_title(f'Patient {patient.patient_id}, Lead {lead_name}')
+    def update_plot(self):
+        patient = self.patient_containers[self.current_patient_index]
 
-    plt.tight_layout()
-    plt.draw()
+        for i, (lead_name, signal) in enumerate(zip(patient.leads_names_list, patient.signals_list_mV)):
+            self.ax[i].clear()
+
+            plot_lead_signal_to_ax(signal_mV=signal, ax=self.ax[i])
+
+            # Передаем текущее имя отведения в метод отрисовки
+            self._plot_delineation(self.ax[i], signal, patient.true_delinations, lead_name, is_true_delineation=True)
+            self._plot_delineation(self.ax[i], signal, patient.our_delineations, lead_name, is_true_delineation=False)
+
+            handles, labels = self.ax[i].get_legend_handles_labels()
+            unique_labels = dict(zip(labels, handles))
+            self.ax[i].legend(
+                unique_labels.values(),
+                unique_labels.keys(),
+                loc='upper right'
+            )
+            self.ax[i].set_title(f'Patient {patient.patient_id}, Lead {lead_name}')
+
+        plt.tight_layout()
+        plt.draw()
 
     def on_key_press(self, event):
 
@@ -115,8 +115,8 @@ if __name__ == "__main__":
 
     # выбор первых нескольких пациентов и интересующих отведений и типов точек
     patient_ids = test_patient_ids[0:10]  # первые несколько пациентов
-    lead_names = [LEADS_NAMES.i, LEADS_NAMES.ii]
-    points_types = [POINTS_TYPES.QRS_PEAK]
+    lead_names = [LEADS_NAMES.i, LEADS_NAMES.ii, LEADS_NAMES.iii]
+    points_types = [POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK, POINTS_TYPES.P_PEAK]
 
     patient_containers = []
 
@@ -140,7 +140,7 @@ if __name__ == "__main__":
                 true_delinations.append(true_delineation_obj)
 
                 # случайная разметка (пример для теста GUI)
-                num_points = 2
+                num_points = 4
                 point_delineation_random = np.random.randint(0, len(signals_list_mV[0]), num_points)  # случайные координаты
                 delin_weights_random = np.random.rand(num_points)  # случайные веса
                 our_delineation_obj = DelineationOnePoint(point_type, lead_name, delin_coords=point_delineation_random, delin_weights=delin_weights_random)
