@@ -1,6 +1,6 @@
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
-from settings import FREQUENCY, LEADS_NAMES, POINTS_TYPES, WAVES_TYPES,  MAX_SIGNAL_LEN, POINTS_TYPES_COLORS
+from settings import FREQUENCY, LEADS_NAMES, POINTS_TYPES, WAVES_TYPES,  MAX_SIGNAL_LEN, POINTS_TYPES_COLORS, TOLERANCE
 
 from neural_networks.neural_networks_helpers import (get_delineation_from_activation_by_mean,
                                                      get_delineation_from_activation_by_extremum_signal,
@@ -10,6 +10,9 @@ from neural_networks.neural_networks_helpers import (get_delineation_from_activa
 from neural_networks import CNN, load_best_net, get_appliable
 from decision_maker.logic import Scene, SceneHistory, Activations, DelineationPoint, DelineationInterval, SearchInterval
 
+import numpy as np
+from scipy.spatial import KDTree
+from collections import defaultdict
 
 
 class Deciser:
@@ -27,7 +30,6 @@ class Deciser:
 
         # P
         self.cnn_i_p = load_best_net(POINTS_TYPES.P_PEAK, LEADS_NAMES.i)
-        # self.cnn_ii_p = get_appliable("BinaryDataset_10000_ii_P_PEAK_250_0320_191832")
         self.cnn_ii_p = load_best_net(POINTS_TYPES.P_PEAK, LEADS_NAMES.ii)
         self.cnn_iii_p = load_best_net(POINTS_TYPES.P_PEAK, LEADS_NAMES.iii)
 
@@ -70,11 +72,101 @@ class Deciser:
 
         
         self.radius_evidence = 10
-        self.threshold_evidence_qrs = 0.5
+        self.threshold_evidence_qrs = 0.9
         self.threshold_evidence_p = 0.2
         self.threshold_evidence_t = 0.2
 
+
+    def _find_neighbors(self, tree: KDTree, point: float):
+        """Находит соседей точки в заданном радиусе"""
+        neighbors = tree.query_ball_point(point, r=self.radius_evidence)
+        if isinstance(neighbors, (int, np.integer)):
+            return [neighbors]
+        return list(neighbors)
+
+    def find_evidence_groups(self, wave_type):
+        # Подготовка данных
+        leads = {
+            LEADS_NAMES.i: (getattr(self, f'delineation_i_{wave_type}'), getattr(self, f'delin_weights_i_{wave_type}')),
+            LEADS_NAMES.ii: (getattr(self, f'delineation_ii_{wave_type}'), getattr(self, f'delin_weights_ii_{wave_type}')),
+            LEADS_NAMES.iii: (getattr(self, f'delineation_iii_{wave_type}'), getattr(self, f'delin_weights_iii_{wave_type}'))
+        }
         
+        # Построение KD-деревьев
+        trees = {}
+        points_data = {}
+        for lead_name, (coords, weights) in leads.items():
+            if coords.size == 0:
+                continue
+            trees[lead_name] = KDTree(coords.reshape(-1, 1))
+            points_data[lead_name] = list(zip(coords, weights))
+        
+        evidence_groups = []
+        used_points = set()  # Для отслеживания уже использованных точек
+
+        # Поиск троек точек
+        for lead1 in trees:
+            other_leads = [lead for lead in trees if lead != lead1]
+            if len(other_leads) < 2:
+                continue
+                
+            lead2, lead3 = other_leads[0], other_leads[1]
+            
+            for idx1, (coord1, weight1) in enumerate(points_data[lead1]):
+                # Пропускаем уже использованные точки
+                if (lead1, idx1) in used_points:
+                    continue
+                    
+                # Поиск во втором отведении
+                neighbors2 = self._find_neighbors(trees[lead2], coord1)
+                for idx2 in neighbors2:
+                    if (lead2, idx2) in used_points:
+                        continue
+                        
+                    coord2, weight2 = points_data[lead2][idx2]
+                    
+                    # Поиск в третьем отведении
+                    neighbors3 = self._find_neighbors(trees[lead3], coord2)
+                    for idx3 in neighbors3:
+                        if (lead3, idx3) in used_points:
+                            continue
+                            
+                        coord3, weight3 = points_data[lead3][idx3]
+                        
+                        # Проверка полного условия
+                        if abs(coord1 - coord3) <= self.radius_evidence:
+                            avg_weight = (weight1 + weight2 + weight3) / 3 
+                            if avg_weight > getattr(self, f'threshold_evidence_{wave_type}'):
+                                group = {
+                                    lead1: (coord1, weight1),
+                                    lead2: (coord2, weight2),
+                                    lead3: (coord3, weight3),
+                                    'average_weight': avg_weight
+                                }
+                                evidence_groups.append(group)
+                                # Помечаем точки как использованные
+                                used_points.add((lead1, idx1))
+                                used_points.add((lead2, idx2))
+                                used_points.add((lead3, idx3))
+        
+        # Сортировка по убыванию средней уверенности
+        evidence_groups.sort(key=lambda x: -x['average_weight'])
+        return evidence_groups
+    
+    def find_top_groups_in_range(self, groups, coord_range):
+        min_coord, max_coord = coord_range
+        
+        filtered = [
+            g for g in groups
+            if any(min_coord <= g[lead][0] <= max_coord for lead in g if lead != 'average_weight')
+        ]
+        
+        if not filtered:
+            return None
+            
+        # Возвращаем группу с максимальным average_weight
+        return max(filtered, key=lambda x: x['average_weight'])  
+
     def clear_scene(self):
         self.scene.scene_objects_dict.clear()
         self.history.visibles_groups.clear()
@@ -83,7 +175,10 @@ class Deciser:
         
         
     def what_points_we_want(self):
-        return {LEADS_NAMES.i: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK]}
+        return {LEADS_NAMES.i: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK],
+                # LEADS_NAMES.ii: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK],
+                # LEADS_NAMES.iii: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK]
+                }
         
     def get_delineation_and_weights_qrs_p_t(self, threshold):
         
@@ -118,153 +213,7 @@ class Deciser:
         
         
         
-    def rank_by_weight(self, weights, delineation, coord_range):
-        """
-        Находит координату самой уверенной точки в заданном диапазоне.
-        :param weights: Список уверенностей.
-        :param delineation: Список координат точек.
-        :param coord_range: Диапазон координат (min, max).
-        :return: Координаты точек отсортированные по уверености в диапазоне или None, если таких точек нет.
-        """
-        # Объединяем weights и delineation в список кортежей
-        combined = list(zip(weights, delineation))
-        
-        # Фильтруем точки, которые попадают в заданный диапазон
-        filtered_points = [(w, coord) for w, coord in combined if coord_range[0] <= coord <= coord_range[1]]
-     
-        # Если нет точек в диапазоне, возвращаем None
-        if not filtered_points:
-            return None
-        
-        # Сортируем по уверенности (по убыванию)
-        sorted_points = sorted(filtered_points, key=lambda x: x[0], reverse=True)
-        
-        # Возвращаем координаты отсортированные по уверености
-        return sorted_points
-        
-        
-    def Calculate_evidence(self, wave_type, main_lead):
-        """
-        Параметры:
-            wave_type: тип волны (qrs, p, t)
-            main_lead: отведение в котором поставлена точка (LEADS_NAMES.i, LEADS_NAMES.ii, LEADS_NAMES.iii)
-        
-        Возвращает:
-            Кортеж (result_delineation, result_evidence)
-            result_delineation - координаты точек, имеющие evidence > threshold_evidence
-        """
-        # Порог
-        threshold_evidence = getattr(self, f'threshold_evidence_{wave_type}')
-        
-        # Получаем данные для main_lead отведения
-        main_delineation = getattr(self, f'delineation_{main_lead}_{wave_type}')
-        main_weights = getattr(self, f'delin_weights_{main_lead}_{wave_type}')
-        
-        # Создаем словарь кандидатов {координата: [веса]}
-        candidates = {coord: [weight] for coord, weight in zip(main_delineation, main_weights)}
-        
-        # Список отведений (кроме основного)
-        other_leads = [lead for lead in [LEADS_NAMES.i, LEADS_NAMES.ii, LEADS_NAMES.iii] if lead != main_lead]
-        
-        # Ищем согласованные точки в других отведениях
-        for lead in other_leads:
-            lead_delineation = getattr(self, f'delineation_{lead}_{wave_type}')
-            lead_weights = getattr(self, f'delin_weights_{lead}_{wave_type}')
-            
-            for main_coord in candidates:
-                flag = False
-
-                for coord, weight in zip(lead_delineation, lead_weights):
-                    if abs(coord - main_coord) <= self.radius_evidence:
-                        candidates[main_coord].append(weight)
-                        flag = True
-                        
-                if not flag:
-                    candidates[main_coord].append(0)
-                        
-        
-        # Вычисляем среднюю уверенность для каждого кандидата
-        average_confidence = {
-            coord: sum(weights) / len(weights) 
-            for coord, weights in candidates.items()
-        }
-        
-        result_delineation = []
-        result_evidence = []
-        ids = []
-        
-       
-
-        
-        # Фильтруем по порогу threshold_evidence
-        for coord, avg_weight in average_confidence.items():
-
-            if avg_weight >= threshold_evidence:
-                result_delineation.append(coord)
-                result_evidence.append(avg_weight)
-                    
-        return result_delineation, result_evidence
-    
-    def get_candidate_points(self):
-        
-        # Добавление на сцену активаций QRS на отведении I
-        activ_qrs_i = Activations(net_activations=self.activations_i_qrs,
-                            activations_t=self.time_s,
-                            color=POINTS_TYPES_COLORS[POINTS_TYPES.QRS_PEAK],
-                            lead_name=LEADS_NAMES.i)
-        
-        id1 = self.scene.add_object(activ_qrs_i)
-        self.history.add_entry(visibles=[id1])
-                
-        # Добавление на сцену всех R пиков
-        # result_delineation_qrs, result_evidence_qrs = self.Finding_all_QRS_PEAK()
-        result_delineation_qrs, result_evidence_qrs = self.Calculate_evidence(WAVES_TYPES.QRS, LEADS_NAMES.i)
-        ids = []
-        for coord in result_delineation_qrs:
-            R = DelineationPoint(t=coord/FREQUENCY,
-                                      lead_name=LEADS_NAMES.i,
-                                      point_type=POINTS_TYPES.QRS_PEAK,
-                                      sertainty=0.5)
-            id_ = self.scene.add_object(R)
-            ids.append(id_)
-            
-        self.history.add_entry(visibles=ids, invisibles=[id1])
-
-        
-        # Пик T
-        result_delineation_t_i, result_evidence_t_i = self.Calculate_evidence(WAVES_TYPES.T, LEADS_NAMES.i)
-        result_delineation_t_ii, result_evidence_t_ii = self.Calculate_evidence(WAVES_TYPES.T, LEADS_NAMES.ii)
-        result_delineation_t_iii, result_evidence_t_iii = self.Calculate_evidence(WAVES_TYPES.T, LEADS_NAMES.iii)
-
-        result_delineation_t = []
-        result_delineation_t.extend(result_delineation_t_i)
-        result_delineation_t.extend(result_delineation_t_ii)
-        result_delineation_t.extend(result_delineation_t_iii)
-        
-        result_evidence_t = []
-        result_evidence_t.extend(result_evidence_t_i)
-        result_evidence_t.extend(result_evidence_t_ii)
-        result_evidence_t.extend(result_evidence_t_iii)
-
-        
-        
-        # Пик P
-        result_delineation_p_i, result_evidence_p_i = self.Calculate_evidence(WAVES_TYPES.P, LEADS_NAMES.i)
-        result_delineation_p_ii, result_evidence_p_ii = self.Calculate_evidence(WAVES_TYPES.P, LEADS_NAMES.ii)
-        result_delineation_p_iii, result_evidence_p_iii = self.Calculate_evidence(WAVES_TYPES.P, LEADS_NAMES.iii)
-
-        result_delineation_p = []
-        result_delineation_p.extend(result_delineation_p_i)
-        result_delineation_p.extend(result_delineation_p_ii)
-        result_delineation_p.extend(result_delineation_p_iii)
-        
-        result_evidence_p = []
-        result_evidence_p.extend(result_evidence_p_i)
-        result_evidence_p.extend(result_evidence_p_ii)
-        result_evidence_p.extend(result_evidence_p_iii)
-        
-        
-        return result_delineation_qrs, result_evidence_qrs, result_delineation_p, result_evidence_p, result_delineation_t, result_evidence_t
+  
     
     def run(self, signals,  leads_names):
         self.signals = signals
@@ -272,76 +221,179 @@ class Deciser:
 
         self.get_delineation_and_weights_qrs_p_t(threshold=0.2)
         
-        result_delineation_qrs, result_evidence_qrs, result_delineation_p, result_evidence_p, result_delineation_t, result_evidence_t = self.get_candidate_points()
-
-        firstR_delineation = result_delineation_qrs[0]
-
         
-        for ind in range(len(result_delineation_qrs) - 1):
+        
+        groups_qrs = self.find_evidence_groups("qrs")
+        groups_p = self.find_evidence_groups("p")
+        groups_t = self.find_evidence_groups("t")
+        
+        print(groups_p)
+        print()
+        print(groups_t)
+        
+        ids_qrs = []
+        ids_t = []
+        ids_p = []
+        
+        # Сортируем QRS группы по координате первого отведения
+        sorted_qrs_groups = sorted(groups_qrs, key=lambda g: g[list(g.keys())[0]][0])
+        
+        # Проходим по всем парам соседних QRS групп
+        for i in range(len(sorted_qrs_groups)-1):
+            current_qrs = sorted_qrs_groups[i]
+            next_qrs = sorted_qrs_groups[i+1]
+            
+            # Получаем координаты текущего и следующего QRS
+            current_coord = current_qrs[list(current_qrs.keys())[0]][0]
+            next_coord = next_qrs[list(next_qrs.keys())[0]][0]
+            
+            # Создаем точки QRS для текущей группы
+            for lead_name, value in current_qrs.items():
+                if lead_name == 'average_weight':
+                    continue
                     
-            # Отображение двух соседних пиков R
-            nextR_delineation = result_delineation_qrs[ind + 1]
+                coord = value[0]
+                point = DelineationPoint(
+                    t=coord/FREQUENCY,
+                    lead_name=lead_name,
+                    point_type=POINTS_TYPES.QRS_PEAK,
+                    sertainty=0.5  
+                )
+                ids_qrs.append(self.scene.add_object(point))
             
+            # Ищем T-волну между текущим и следующим QRS
+            t_range = (current_coord + 1, next_coord - 1)  # +1/-1 чтобы не пересекаться с QRS
+            best_t_group = self.find_top_groups_in_range(groups_t, t_range)
             
-            if nextR_delineation < firstR_delineation:
-                break
+            if best_t_group:
+                # Создаем точки T для найденной группы
+                for lead_name, value in best_t_group.items():
+                    if lead_name == 'average_weight':
+                        continue
+                        
+                    coord = value[0]
+                    point = DelineationPoint(
+                        t=coord/FREQUENCY,
+                        lead_name=lead_name,
+                        point_type=POINTS_TYPES.T_PEAK,
+                        sertainty=0.5  
+                    )
+                    ids_t.append(self.scene.add_object(point))
+                    
+                
+                # Ищем P-волну между T волной и следующим QRS
+                p_range = (coord + 1, next_coord - 1)  # +1/-1 чтобы не пересекаться с QRS
+                best_p_group = self.find_top_groups_in_range(groups_p, p_range)
+                
+                if best_p_group:
+                    # Создаем точки T для найденной группы
+                    for lead_name, value in best_p_group.items():
+                        if lead_name == 'average_weight':
+                            continue
+                            
+                        coord = value[0]
+                        point = DelineationPoint(
+                            t=coord/FREQUENCY,
+                            lead_name=lead_name,
+                            point_type=POINTS_TYPES.P_PEAK,
+                            sertainty=0.5  
+                        )
+                        ids_p.append(self.scene.add_object(point))
+                
         
-            # Отображение облаков активаций группы волны T между двумя пиками R
-            activ_group_t = Activations(net_activations=self.activations_i_t[firstR_delineation: nextR_delineation],
-                                activations_t=self.time_s[firstR_delineation: nextR_delineation],
-                                color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
-                                lead_name=LEADS_NAMES.i)   
-            id4 = self.scene.add_object(activ_group_t)
-            self.history.add_entry(visibles=[id4])
-
-
-            
-            # Пик T            
-            win_T = self.rank_by_weight(result_evidence_t, result_delineation_t, (firstR_delineation, nextR_delineation))
-            
-            if win_T == None: 
-                self.history.add_entry(invisibles=[id4])
-                firstR_delineation = nextR_delineation
+        # Добавляем последнюю QRS группу (для которой нет следующей)
+        last_qrs = sorted_qrs_groups[-1]
+        for lead_name, value in last_qrs.items():
+            if lead_name == 'average_weight':
                 continue
+                
+            coord = value[0]
+            point = DelineationPoint(
+                t=coord/FREQUENCY,
+                lead_name=lead_name,
+                point_type=POINTS_TYPES.QRS_PEAK,
+                sertainty=0.5
+            )
+            ids_qrs.append(self.scene.add_object(point))
+        
+        # Обновляем историю с видимыми точками
+        self.history.add_entry(visibles=ids_qrs)
+        self.history.add_entry(visibles=ids_p)
+        self.history.add_entry(visibles=ids_t)
+
+        
+        
+        
+      
+
+
+     
+        
+        # for ind in range(len(result_delineation_qrs) - 1):
+                    
+        #     # Отображение двух соседних пиков R
+        #     nextR_delineation = result_delineation_qrs[ind + 1]
             
-            win_delin_point_T = DelineationPoint(t=win_T[0][1]/FREQUENCY,
-                                      lead_name=LEADS_NAMES.i,
-                                      point_type=POINTS_TYPES.T_PEAK,
-                                      sertainty=0.5)
-            id5 = self.scene.add_object(win_delin_point_T)
-            self.history.add_entry(visibles=[id5])
-
-
-
-            # Отображение групповых активаций волны P между поставленным пиком T и R
-            activ_group_p = Activations(net_activations=self.activations_i_p[int(win_delin_point_T.t*FREQUENCY): nextR_delineation],
-                                activations_t=self.time_s[int(win_delin_point_T.t*FREQUENCY): nextR_delineation],
-                                color=POINTS_TYPES_COLORS[POINTS_TYPES.P_PEAK],
-                                lead_name=LEADS_NAMES.i)
-            id6 = self.scene.add_object(activ_group_p)
-            self.history.add_entry(visibles=[id6], invisibles=[id4])
             
-            
-
-            # Пик P
-            win_P = self.rank_by_weight(result_evidence_p, result_delineation_p, (win_T[0][1], nextR_delineation))
-            
-            if win_P == None: 
-                self.history.add_entry(invisibles=[id6])
-                firstR_delineation = nextR_delineation
-                continue
-
-            win_delin_point_P = DelineationPoint(t=win_P[0][1]/FREQUENCY,
-                                      lead_name=LEADS_NAMES.i,
-                                      point_type=POINTS_TYPES.P_PEAK,
-                                      sertainty=0.5)
-            id7 = self.scene.add_object(win_delin_point_P)
-            self.history.add_entry(visibles=[id7])
-            self.history.add_entry(invisibles=[id6])
+        #     if nextR_delineation < firstR_delineation:
+        #         break
+        
+        #     # Отображение облаков активаций группы волны T между двумя пиками R
+        #     activ_group_t = Activations(net_activations=self.activations_i_t[firstR_delineation: nextR_delineation],
+        #                         activations_t=self.time_s[firstR_delineation: nextR_delineation],
+        #                         color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
+        #                         lead_name=LEADS_NAMES.i)   
+        #     id4 = self.scene.add_object(activ_group_t)
+        #     self.history.add_entry(visibles=[id4])
 
 
             
-            firstR_delineation = nextR_delineation
+        #     # Пик T            
+        #     win_T = self.rank_by_weight(result_evidence_t, result_delineation_t, (firstR_delineation, nextR_delineation))
+            
+        #     if win_T == None: 
+        #         self.history.add_entry(invisibles=[id4])
+        #         firstR_delineation = nextR_delineation
+        #         continue
+            
+        #     win_delin_point_T = DelineationPoint(t=win_T[0][1]/FREQUENCY,
+        #                               lead_name=LEADS_NAMES.i,
+        #                               point_type=POINTS_TYPES.T_PEAK,
+        #                               sertainty=0.5)
+        #     id5 = self.scene.add_object(win_delin_point_T)
+        #     self.history.add_entry(visibles=[id5])
+
+
+
+        #     # Отображение групповых активаций волны P между поставленным пиком T и R
+        #     activ_group_p = Activations(net_activations=self.activations_i_p[int(win_delin_point_T.t*FREQUENCY): nextR_delineation],
+        #                         activations_t=self.time_s[int(win_delin_point_T.t*FREQUENCY): nextR_delineation],
+        #                         color=POINTS_TYPES_COLORS[POINTS_TYPES.P_PEAK],
+        #                         lead_name=LEADS_NAMES.i)
+        #     id6 = self.scene.add_object(activ_group_p)
+        #     self.history.add_entry(visibles=[id6], invisibles=[id4])
+            
+            
+
+        #     # Пик P
+        #     win_P = self.rank_by_weight(result_evidence_p, result_delineation_p, (win_T[0][1], nextR_delineation))
+            
+        #     if win_P == None: 
+        #         self.history.add_entry(invisibles=[id6])
+        #         firstR_delineation = nextR_delineation
+        #         continue
+
+        #     win_delin_point_P = DelineationPoint(t=win_P[0][1]/FREQUENCY,
+        #                               lead_name=LEADS_NAMES.i,
+        #                               point_type=POINTS_TYPES.P_PEAK,
+        #                               sertainty=0.5)
+        #     id7 = self.scene.add_object(win_delin_point_P)
+        #     self.history.add_entry(visibles=[id7])
+        #     self.history.add_entry(invisibles=[id6])
+
+
+            
+        #     firstR_delineation = nextR_delineation
             
             
         
@@ -366,12 +418,10 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
     
     train_ids, test_ids = get_test_and_train_ids(LUDB_data)
-    patient_id  = test_ids[14]
+    patient_id  = test_ids[17]
     
     print(patient_id)
-    # 15
-    # 4
-    # 12
+    # 17
 
     
     signals_list_mV, leads_names_list_mV = get_signals_by_id_several_leads_mV(patient_id=patient_id, LUDB_data=LUDB_data,leads_names_list=leads_names)
@@ -380,6 +430,19 @@ if __name__ == "__main__":
 
     deciser = Deciser()
     scene, scene_history = deciser.run(signals=signals_list_mkV,  leads_names=leads_names_list_mkV)
+    
+    # our_coords = scene.get_binary_delineation_by_point_type_and_lead(LEADS_NAMES.i,
+    #                                                                  POINTS_TYPES.T_PEAK)  # dвремя не в секундах
+
+    # # вытаскиваем верную разметку этой точки в этом отведении
+    # true_coords_in_seconds = get_one_lead_delineation_by_patient_id(patient_id=patient_id,
+    #                                                      LUDB_data=LUDB_data,
+    #                                                      lead_name=LEADS_NAMES.i,
+    #                                                      point_type=POINTS_TYPES.T_PEAK)
+    # true_coords = [true_coords_in_seconds[i]* FREQUENCY for i in range(len(true_coords_in_seconds))]
+    
+    # print(our_coords)
+    # print(true_coords)
     
     # scene, scene_history = create_test_scene_and_history() # их надо взять из отработавшего Deciser
     ui = UI_MainForm(leads_names=leads_names_list_mV, signals=signals_list_mV, scene=scene, scene_history=scene_history)
