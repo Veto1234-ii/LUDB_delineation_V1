@@ -243,5 +243,5 @@ if __name__ == "__main__":
     e2 = report.get_mean_abs_err_across_points_of_type(point_type=POINTS_TYPES.QRS_PEAK)
     e3 = report.get_mean_abs_err_across_points_of_type(point_type=POINTS_TYPES.T_PEAK)
 
-    print(f"             Подробнее err: пик Р {e1:.2f}, пик QRS {e2:.2f}, пик T {e3:.2f}")
+    print(f"             Подробнее  err: пик Р {e1:.2f}, пик QRS {e2:.2f}, пик T {e3:.2f}")
 
