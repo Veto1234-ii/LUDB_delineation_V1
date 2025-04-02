@@ -274,74 +274,75 @@ class Deciser:
         
         result_delineation_qrs, result_evidence_qrs, result_delineation_p, result_evidence_p, result_delineation_t, result_evidence_t = self.get_candidate_points()
 
-        firstR_delineation = result_delineation_qrs[0]
-
-        
-        for ind in range(len(result_delineation_qrs) - 1):
-                    
-            # Отображение двух соседних пиков R
-            nextR_delineation = result_delineation_qrs[ind + 1]
+        if len(result_delineation_qrs) != 0:
+            firstR_delineation = result_delineation_qrs[0]
+    
             
+            for ind in range(len(result_delineation_qrs) - 1):
+                        
+                # Отображение двух соседних пиков R
+                nextR_delineation = result_delineation_qrs[ind + 1]
+                
+                
+                if nextR_delineation < firstR_delineation:
+                    break
             
-            if nextR_delineation < firstR_delineation:
-                break
-        
-            # Отображение облаков активаций группы волны T между двумя пиками R
-            activ_group_t = Activations(net_activations=self.activations_i_t[firstR_delineation: nextR_delineation],
-                                activations_t=self.time_s[firstR_delineation: nextR_delineation],
-                                color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
-                                lead_name=LEADS_NAMES.i)   
-            id4 = self.scene.add_object(activ_group_t)
-            self.history.add_entry(visibles=[id4])
-
-
-            
-            # Пик T            
-            win_T = self.rank_by_weight(result_evidence_t, result_delineation_t, (firstR_delineation, nextR_delineation))
-            
-            if win_T == None: 
-                self.history.add_entry(invisibles=[id4])
-                firstR_delineation = nextR_delineation
-                continue
-            
-            win_delin_point_T = DelineationPoint(t=win_T[0][1]/FREQUENCY,
-                                      lead_name=LEADS_NAMES.i,
-                                      point_type=POINTS_TYPES.T_PEAK,
-                                      sertainty=0.5)
-            id5 = self.scene.add_object(win_delin_point_T)
-            self.history.add_entry(visibles=[id5])
-
-
-
-            # Отображение групповых активаций волны P между поставленным пиком T и R
-            activ_group_p = Activations(net_activations=self.activations_i_p[int(win_delin_point_T.t*FREQUENCY): nextR_delineation],
-                                activations_t=self.time_s[int(win_delin_point_T.t*FREQUENCY): nextR_delineation],
-                                color=POINTS_TYPES_COLORS[POINTS_TYPES.P_PEAK],
-                                lead_name=LEADS_NAMES.i)
-            id6 = self.scene.add_object(activ_group_p)
-            self.history.add_entry(visibles=[id6], invisibles=[id4])
-            
-            
-
-            # Пик P
-            win_P = self.rank_by_weight(result_evidence_p, result_delineation_p, (win_T[0][1], nextR_delineation))
-            
-            if win_P == None: 
+                # Отображение облаков активаций группы волны T между двумя пиками R
+                activ_group_t = Activations(net_activations=self.activations_i_t[firstR_delineation: nextR_delineation],
+                                    activations_t=self.time_s[firstR_delineation: nextR_delineation],
+                                    color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
+                                    lead_name=LEADS_NAMES.i)   
+                id4 = self.scene.add_object(activ_group_t)
+                self.history.add_entry(visibles=[id4])
+    
+    
+                
+                # Пик T            
+                win_T = self.rank_by_weight(result_evidence_t, result_delineation_t, (firstR_delineation, nextR_delineation))
+                
+                if win_T == None: 
+                    self.history.add_entry(invisibles=[id4])
+                    firstR_delineation = nextR_delineation
+                    continue
+                
+                win_delin_point_T = DelineationPoint(t=win_T[0][1]/FREQUENCY,
+                                          lead_name=LEADS_NAMES.i,
+                                          point_type=POINTS_TYPES.T_PEAK,
+                                          sertainty=0.5)
+                id5 = self.scene.add_object(win_delin_point_T)
+                self.history.add_entry(visibles=[id5])
+    
+    
+    
+                # Отображение групповых активаций волны P между поставленным пиком T и R
+                activ_group_p = Activations(net_activations=self.activations_i_p[int(win_delin_point_T.t*FREQUENCY): nextR_delineation],
+                                    activations_t=self.time_s[int(win_delin_point_T.t*FREQUENCY): nextR_delineation],
+                                    color=POINTS_TYPES_COLORS[POINTS_TYPES.P_PEAK],
+                                    lead_name=LEADS_NAMES.i)
+                id6 = self.scene.add_object(activ_group_p)
+                self.history.add_entry(visibles=[id6], invisibles=[id4])
+                
+                
+    
+                # Пик P
+                win_P = self.rank_by_weight(result_evidence_p, result_delineation_p, (win_T[0][1], nextR_delineation))
+                
+                if win_P == None: 
+                    self.history.add_entry(invisibles=[id6])
+                    firstR_delineation = nextR_delineation
+                    continue
+    
+                win_delin_point_P = DelineationPoint(t=win_P[0][1]/FREQUENCY,
+                                          lead_name=LEADS_NAMES.i,
+                                          point_type=POINTS_TYPES.P_PEAK,
+                                          sertainty=0.5)
+                id7 = self.scene.add_object(win_delin_point_P)
+                self.history.add_entry(visibles=[id7])
                 self.history.add_entry(invisibles=[id6])
+    
+    
+                
                 firstR_delineation = nextR_delineation
-                continue
-
-            win_delin_point_P = DelineationPoint(t=win_P[0][1]/FREQUENCY,
-                                      lead_name=LEADS_NAMES.i,
-                                      point_type=POINTS_TYPES.P_PEAK,
-                                      sertainty=0.5)
-            id7 = self.scene.add_object(win_delin_point_P)
-            self.history.add_entry(visibles=[id7])
-            self.history.add_entry(invisibles=[id6])
-
-
-            
-            firstR_delineation = nextR_delineation
             
             
         
