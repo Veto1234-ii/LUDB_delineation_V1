@@ -8,6 +8,7 @@ from datetime import datetime
 from neural_networks.neural_networks_helpers.helpers_CNN import get_F1_of_one_CNN
 import torch.nn.functional as F
 from imblearn.over_sampling import RandomOverSampler
+from paths import SAVED_NETS_PATH
 
 
 class CNN(nn.Module):
@@ -149,5 +150,5 @@ def save_model(binary_dataset, POINT_TYPE, LEAD_NAME, epochs):
     model.add_info(F1, mean_err, POINT_TYPE, LEAD_NAME)
 
     timestamp = datetime.now().strftime("%m%d_%H%M%S")
-    os.makedirs("SAVED_NETS", exist_ok=True)
-    torch.save(model, f"SAVED_NETS/{binary_dataset.get_name()}_{epochs}_16-64_{timestamp}.pth")
+    os.makedirs(f"{SAVED_NETS_PATH}", exist_ok=True)
+    torch.save(model, f"{SAVED_NETS_PATH}/{binary_dataset.get_name()}_{epochs}_16-64_{timestamp}.pth")
