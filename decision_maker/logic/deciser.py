@@ -1,5 +1,7 @@
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
+
 from settings import FREQUENCY, LEADS_NAMES, POINTS_TYPES, WAVES_TYPES,  MAX_SIGNAL_LEN, POINTS_TYPES_COLORS, TOLERANCE
 
 from neural_networks.neural_networks_helpers import (get_delineation_from_activation_by_mean,
@@ -71,7 +73,7 @@ class Deciser:
         
 
         
-        self.radius_evidence = 10
+        self.radius_evidence = 50
         self.threshold_evidence_qrs = 0.9
         self.threshold_evidence_p = 0.2
         self.threshold_evidence_t = 0.2
@@ -227,8 +229,7 @@ class Deciser:
         groups_p = self.find_evidence_groups("p")
         groups_t = self.find_evidence_groups("t")
         
-        print(groups_p)
-        print()
+  
         print(groups_t)
         
         ids_qrs = []
@@ -263,6 +264,8 @@ class Deciser:
             
             # Ищем T-волну между текущим и следующим QRS
             t_range = (current_coord + 1, next_coord - 1)  # +1/-1 чтобы не пересекаться с QRS
+            
+            
             best_t_group = self.find_top_groups_in_range(groups_t, t_range)
             
             if best_t_group:
@@ -318,14 +321,84 @@ class Deciser:
         
         # Обновляем историю с видимыми точками
         self.history.add_entry(visibles=ids_qrs)
-        self.history.add_entry(visibles=ids_p)
+        # self.history.add_entry(visibles=ids_p)
         self.history.add_entry(visibles=ids_t)
 
-        
-        
-        
       
+        # Отображение облаков активаций волны QRS 
+        # activ_group_qrs_i = Activations(net_activations=self.activations_i_qrs,
+        #                     activations_t=self.time_s,
+        #                     color=POINTS_TYPES_COLORS[POINTS_TYPES.QRS_PEAK],
+        #                     lead_name=LEADS_NAMES.i)   
+        # id1 = self.scene.add_object(activ_group_qrs_i)
+    
+    
+        # activ_group_qrs_ii = Activations(net_activations=self.activations_ii_qrs,
+        #                     activations_t=self.time_s,
+        #                     color=POINTS_TYPES_COLORS[POINTS_TYPES.QRS_PEAK],
+        #                     lead_name=LEADS_NAMES.ii)   
+        # id2 = self.scene.add_object(activ_group_qrs_ii)
+    
+    
+        # activ_group_qrs_iii = Activations(net_activations=self.activations_iii_qrs,
+        #                     activations_t=self.time_s,
+        #                     color=POINTS_TYPES_COLORS[POINTS_TYPES.QRS_PEAK],
+        #                     lead_name=LEADS_NAMES.iii)   
+        # id3 = self.scene.add_object(activ_group_qrs_iii)
+        
+        # self.history.add_entry(visibles=[id1, id2, id3])
 
+      
+        # Отображение облаков активаций волны T 
+        activ_group_t_i = Activations(net_activations=self.activations_i_t,
+                            activations_t=self.time_s,
+                            color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
+                            lead_name=LEADS_NAMES.i)   
+        id4 = self.scene.add_object(activ_group_t_i)
+    
+    
+        activ_group_t_ii = Activations(net_activations=self.activations_ii_t,
+                            activations_t=self.time_s,
+                            color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
+                            lead_name=LEADS_NAMES.ii)   
+        id5 = self.scene.add_object(activ_group_t_ii)
+    
+    
+        activ_group_t_iii = Activations(net_activations=self.activations_iii_t,
+                            activations_t=self.time_s,
+                            color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
+                            lead_name=LEADS_NAMES.iii)   
+        id6 = self.scene.add_object(activ_group_t_iii)
+    
+        
+        
+        # Отображение облаков активаций группы волны P
+        # activ_group_p_i = Activations(net_activations=self.activations_i_p,
+        #                     activations_t=self.time_s,
+        #                     color=POINTS_TYPES_COLORS[POINTS_TYPES.P_PEAK],
+        #                     lead_name=LEADS_NAMES.i)   
+        # id7 = self.scene.add_object(activ_group_p_i)
+    
+
+
+        # activ_group_p_ii = Activations(net_activations=self.activations_ii_p,
+        #                     activations_t=self.time_s,
+        #                     color=POINTS_TYPES_COLORS[POINTS_TYPES.P_PEAK],
+        #                     lead_name=LEADS_NAMES.ii)   
+        # id8 = self.scene.add_object(activ_group_p_ii)
+    
+
+
+        # activ_group_p_iii = Activations(net_activations=self.activations_iii_p,
+        #                     activations_t=self.time_s,
+        #                     color=POINTS_TYPES_COLORS[POINTS_TYPES.P_PEAK],
+        #                     lead_name=LEADS_NAMES.iii)   
+        # id9 = self.scene.add_object(activ_group_p_iii)
+        
+        
+        self.history.add_entry(visibles=[id4, id5, id6])
+        
+        
 
      
         
@@ -418,7 +491,7 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
     
     train_ids, test_ids = get_test_and_train_ids(LUDB_data)
-    patient_id  = test_ids[17]
+    patient_id  = test_ids[35]
     
     print(patient_id)
     # 17
