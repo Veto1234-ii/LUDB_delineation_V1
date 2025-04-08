@@ -26,29 +26,35 @@ def find_activation_clouds(threshold, activations):
     return activation_clouds
 
 
-def find_extremum_coord(signal, activation_cloud_x):
+def find_extremum_coord(signal, activation_cloud_x, is_QRS_PEAK):
     # 1. Извлечение сигнала, соответствующего облаку активаций
     signal = np.array(signal)
     activation_cloud_x = np.array(activation_cloud_x)
     segment = signal[activation_cloud_x]
                     
-    # 2. Поиск максимума и минимума
-    max_value = np.max(segment)
-    min_value = np.min(segment)
+    # R всегда положительный
+    if is_QRS_PEAK:
+        extremum_index_in_segment = np.argmax(segment)
+        extremum_index_in_signal = activation_cloud_x[extremum_index_in_segment]
     
-    # 3. Определение наиболее выраженного экстремума
-    if abs(max_value) > abs(min_value):
-        extremum_index_in_segment = np.argmax(segment)  # Индекс максимума в отрезке
     else:
-        extremum_index_in_segment = np.argmin(segment)  # Индекс минимума в отрезке
-    
-    # 4. Определение координаты экстремума
-    extremum_index_in_signal = activation_cloud_x[extremum_index_in_segment]
+        # 2. Поиск максимума и минимума
+        max_value = np.max(segment)
+        min_value = np.min(segment)
+        
+        # 3. Определение наиболее выраженного экстремума
+        if abs(max_value) > abs(min_value):
+            extremum_index_in_segment = np.argmax(segment)  # Индекс максимума в отрезке
+        else:
+            extremum_index_in_segment = np.argmin(segment)  # Индекс минимума в отрезке
+        
+        # 4. Определение координаты экстремума
+        extremum_index_in_signal = activation_cloud_x[extremum_index_in_segment]
     
     return extremum_index_in_signal
 
 
-def get_delineation_from_activation_by_extremum_signal(threshold, activations, signal):
+def get_delineation_from_activation_by_extremum_signal(threshold, activations, signal, is_QRS_PEAK = False):
     # TODO
     activation_clouds = find_activation_clouds(threshold, activations)
 
@@ -56,7 +62,7 @@ def get_delineation_from_activation_by_extremum_signal(threshold, activations, s
     delin_weights = []
 
     for cloud_x, cloud_y in activation_clouds:
-        extr = find_extremum_coord(signal, cloud_x)
+        extr = find_extremum_coord(signal, cloud_x, is_QRS_PEAK)
         delin_coords.append(extr)
         delin_weights.append(max(cloud_y))  # Вес — максимальное значение активации в облаке
 
