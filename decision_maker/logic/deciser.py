@@ -69,14 +69,22 @@ class Deciser:
         
 
         
-        self.radius_evidence = 10
+        self.radius_evidence = 20
         self.threshold_evidence_qrs = 0.5
         self.threshold_evidence_p = 0.2
         self.threshold_evidence_t = 0.2
 
         
-        
+    def clear_scene(self):
+        self.scene.scene_objects_dict.clear()
+        self.history.visibles_groups.clear()
+        self.history.invisibles_groups.clear()
 
+        
+        
+    def what_points_we_want(self):
+        return {LEADS_NAMES.i: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK]}
+        
     def get_delineation_and_weights_qrs_p_t(self, threshold):
         
         # QRS
@@ -85,9 +93,9 @@ class Deciser:
         self.activations_iii_qrs = get_activations_of_CNN_on_signal(self.cnn_iii_qrs, self.signals[2])
 
         
-        self.delineation_i_qrs, self.delin_weights_i_qrs = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_i_qrs, self.signals[0])
-        self.delineation_ii_qrs, self.delin_weights_ii_qrs = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_ii_qrs, self.signals[1])
-        self.delineation_iii_qrs, self.delin_weights_iii_qrs = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_iii_qrs, self.signals[2])
+        self.delineation_i_qrs, self.delin_weights_i_qrs = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_i_qrs, self.signals[0], is_QRS_PEAK = True)
+        self.delineation_ii_qrs, self.delin_weights_ii_qrs = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_ii_qrs, self.signals[1], is_QRS_PEAK = True)
+        self.delineation_iii_qrs, self.delin_weights_iii_qrs = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_iii_qrs, self.signals[2], is_QRS_PEAK = True)
 
         # P
         self.activations_i_p = get_activations_of_CNN_on_signal(self.cnn_i_p, self.signals[0])
@@ -185,15 +193,12 @@ class Deciser:
         result_evidence = []
         ids = []
         
-        print()
-        print(f'{wave_type}, {main_lead}')
-        print(main_delineation)
+       
 
         
         # Фильтруем по порогу threshold_evidence
         for coord, avg_weight in average_confidence.items():
-            print(f"Coordinate: {coord}, Evidence: {avg_weight:.2f}")
-
+            print(coord, avg_weight)
             if avg_weight >= threshold_evidence:
                 result_delineation.append(coord)
                 result_evidence.append(avg_weight)
@@ -241,7 +246,6 @@ class Deciser:
         result_evidence_t.extend(result_evidence_t_ii)
         result_evidence_t.extend(result_evidence_t_iii)
 
-        print(result_delineation_t)
         
         
         # Пик P
@@ -259,7 +263,6 @@ class Deciser:
         result_evidence_p.extend(result_evidence_p_ii)
         result_evidence_p.extend(result_evidence_p_iii)
         
-        print(result_delineation_p)
         
         return result_delineation_qrs, result_evidence_qrs, result_delineation_p, result_evidence_p, result_delineation_t, result_evidence_t
     
@@ -271,74 +274,76 @@ class Deciser:
         
         result_delineation_qrs, result_evidence_qrs, result_delineation_p, result_evidence_p, result_delineation_t, result_evidence_t = self.get_candidate_points()
 
-        firstR_delineation = result_delineation_qrs[0]
-
-        
-        for ind in range(len(result_delineation_qrs) - 1):
-                    
-            # Отображение двух соседних пиков R
-            nextR_delineation = result_delineation_qrs[ind + 1]
+        if len(result_delineation_qrs) != 0:
+            firstR_delineation = result_delineation_qrs[0]
+    
             
+            for ind in range(len(result_delineation_qrs) - 1):
+                        
+                # Отображение двух соседних пиков R
+                nextR_delineation = result_delineation_qrs[ind + 1]
+                
+                
+                if nextR_delineation < firstR_delineation:
+                    break
             
-            if nextR_delineation < firstR_delineation:
-                break
-        
-            # Отображение облаков активаций группы волны T между двумя пиками R
-            activ_group_t = Activations(net_activations=self.activations_i_t[firstR_delineation: nextR_delineation],
-                                activations_t=self.time_s[firstR_delineation: nextR_delineation],
-                                color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
-                                lead_name=LEADS_NAMES.i)   
-            id4 = self.scene.add_object(activ_group_t)
-            self.history.add_entry(visibles=[id4])
-
-
-            
-            # Пик T            
-            win_T = self.rank_by_weight(result_evidence_t, result_delineation_t, (firstR_delineation, nextR_delineation))
-            
-            if win_T == None: 
-                self.history.add_entry(invisibles=[id4])
-                firstR_delineation = nextR_delineation
-                continue
-            
-            win_delin_point_T = DelineationPoint(t=win_T[0][1]/FREQUENCY,
-                                      lead_name=LEADS_NAMES.i,
-                                      point_type=POINTS_TYPES.T_PEAK,
-                                      sertainty=0.5)
-            id5 = self.scene.add_object(win_delin_point_T)
-            self.history.add_entry(visibles=[id5])
-
-
-
-            # Отображение групповых активаций волны P между поставленным пиком T и R
-            activ_group_p = Activations(net_activations=self.activations_i_p[int(win_delin_point_T.t*FREQUENCY): nextR_delineation],
-                                activations_t=self.time_s[int(win_delin_point_T.t*FREQUENCY): nextR_delineation],
-                                color=POINTS_TYPES_COLORS[POINTS_TYPES.P_PEAK],
-                                lead_name=LEADS_NAMES.i)
-            id6 = self.scene.add_object(activ_group_p)
-            self.history.add_entry(visibles=[id6], invisibles=[id4])
-            
-            
-
-            # Пик P
-            win_P = self.rank_by_weight(result_evidence_p, result_delineation_p, (win_T[0][1], nextR_delineation))
-            
-            if win_P == None: 
+                # Отображение облаков активаций группы волны T между двумя пиками R
+                activ_group_t = Activations(net_activations=self.activations_i_t[firstR_delineation: nextR_delineation],
+                                    activations_t=self.time_s[firstR_delineation: nextR_delineation],
+                                    color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
+                                    lead_name=LEADS_NAMES.i)   
+                id4 = self.scene.add_object(activ_group_t)
+                self.history.add_entry(visibles=[id4])
+    
+    
+                
+                # Пик T            
+                win_T = self.rank_by_weight(result_evidence_t, result_delineation_t, (firstR_delineation, nextR_delineation))
+                
+                if win_T == None: 
+                    self.history.add_entry(invisibles=[id4])
+                    firstR_delineation = nextR_delineation
+                    continue
+                
+                win_delin_point_T = DelineationPoint(t=win_T[0][1]/FREQUENCY,
+                                          lead_name=LEADS_NAMES.i,
+                                          point_type=POINTS_TYPES.T_PEAK,
+                                          sertainty=0.5)
+                id5 = self.scene.add_object(win_delin_point_T)
+                self.history.add_entry(visibles=[id5])
+    
+    
+    
+                # Отображение групповых активаций волны P между поставленным пиком T и R
+                activ_group_p = Activations(net_activations=self.activations_i_p[int(win_delin_point_T.t*FREQUENCY): nextR_delineation],
+                                    activations_t=self.time_s[int(win_delin_point_T.t*FREQUENCY): nextR_delineation],
+                                    color=POINTS_TYPES_COLORS[POINTS_TYPES.P_PEAK],
+                                    lead_name=LEADS_NAMES.i)
+                id6 = self.scene.add_object(activ_group_p)
+                self.history.add_entry(visibles=[id6], invisibles=[id4])
+                
+                
+    
+                # Пик P
+                win_P = self.rank_by_weight(result_evidence_p, result_delineation_p, (win_T[0][1], nextR_delineation))
+                
+                if win_P == None: 
+                    self.history.add_entry(invisibles=[id6])
+                    firstR_delineation = nextR_delineation
+                    continue
+    
+                win_delin_point_P = DelineationPoint(t=win_P[0][1]/FREQUENCY,
+                                          lead_name=LEADS_NAMES.i,
+                                          point_type=POINTS_TYPES.P_PEAK,
+                                          sertainty=0.5)
+                id7 = self.scene.add_object(win_delin_point_P)
+                self.history.add_entry(visibles=[id7])
                 self.history.add_entry(invisibles=[id6])
+    
+    
+                
                 firstR_delineation = nextR_delineation
-                continue
-
-            win_delin_point_P = DelineationPoint(t=win_P[0][1]/FREQUENCY,
-                                      lead_name=LEADS_NAMES.i,
-                                      point_type=POINTS_TYPES.P_PEAK,
-                                      sertainty=0.5)
-            id7 = self.scene.add_object(win_delin_point_P)
-            self.history.add_entry(visibles=[id7])
-            self.history.add_entry(invisibles=[id6])
-
-
             
-            firstR_delineation = nextR_delineation
             
         
         return self.scene, self.history
@@ -362,7 +367,9 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
     
     train_ids, test_ids = get_test_and_train_ids(LUDB_data)
-    patient_id  = test_ids[26]
+    patient_id  = test_ids[15]
+    
+    print(patient_id)
     # 15
     # 4
     # 12
@@ -374,8 +381,10 @@ if __name__ == "__main__":
 
     deciser = Deciser()
     scene, scene_history = deciser.run(signals=signals_list_mkV,  leads_names=leads_names_list_mkV)
-
+    
     # scene, scene_history = create_test_scene_and_history() # их надо взять из отработавшего Deciser
     ui = UI_MainForm(leads_names=leads_names_list_mV, signals=signals_list_mV, scene=scene, scene_history=scene_history)
     
  
+
+
