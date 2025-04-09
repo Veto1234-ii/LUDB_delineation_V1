@@ -4,8 +4,13 @@ import json
 import numpy as np
 
 def load_binary_dataset_from_file(name, save_dir="SAVED_DATASETS"):
-    # TODO составляем имя файла как name + расширение
-    # TODO возвращаем объект BinaryDataset
+    """
+        Args:
+            name: имя binary_dataset
+            save_dir: место сохранённого binary_dataset
+
+        Returns: (BinaryDataset) датасет бинарной классификации
+    """
 
     save_path = os.path.join(os.path.dirname(__file__), "..", "..", save_dir)
     save_path = os.path.abspath(save_path)  # абсолютный путь
@@ -27,7 +32,12 @@ def load_binary_dataset_from_file(name, save_dir="SAVED_DATASETS"):
     return binary_dataset
 
 def save_binary_dataset_to_file(binary_dataset, save_dir="SAVED_DATASETS"):
-    # TODO сохранение в файл с именем binary_dataset.name + расширение
+    """
+        Args:
+            binary_dataset: (BinaryDataset)  binary_dataset который сохраняется
+            save_dir: место для сохранения
+
+    """
 
     save_path = os.path.join(os.path.dirname(__file__), "..", "..", save_dir)
     save_path = os.path.abspath(save_path)  # абсолютный путь
