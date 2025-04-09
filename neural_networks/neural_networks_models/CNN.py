@@ -1,82 +1,78 @@
-import json
-from pathlib import Path
-
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 import torch.optim as optim
 import os
 from datetime import datetime
 
 from neural_networks.neural_networks_helpers.helpers_CNN import get_F1_of_one_CNN
-from datasets.LUDB_utils import get_test_and_train_ids
-from datasets.LUDB_utils import get_signal_by_id_and_lead_mkV
-from settings import POINTS_TYPES
-from datasets.LUDB_utils import get_one_lead_delineation_by_patient_id
-from paths import PATH_TO_LUDB
+import torch.nn.functional as F
+from imblearn.over_sampling import RandomOverSampler
+from paths import SAVED_NETS_PATH
 
 
 class CNN(nn.Module):
-    def __init__(self):
+    def __init__(self, conv1_out=32, conv2_out=64, kernel1_size=3, kernel2_size=2, dropout_rate=0.2, input_size=400):
         super(CNN, self).__init__()
-
         self.LEAD_NAME = None
         self.POINT_TYPE = None
         self.F1 = None
         self.mean_err = None
-        self.input_size = 500
+        self.input_size = input_size
 
-        self.sigm = nn.Sequential(
+        self.conv1 = nn.Conv1d(1, conv1_out, kernel_size=kernel1_size, padding=kernel1_size // 2)
+        self.conv2 = nn.Conv1d(conv1_out, conv2_out, kernel_size=kernel2_size)
+        self.dropout_layer = nn.Dropout(dropout_rate)
+
+        with torch.no_grad():
+            dummy = torch.randn(1, 1, self.input_size)
+            dummy = F.relu(self.conv1(dummy))
+            dummy = F.max_pool1d(dummy, 2)
+            dummy = F.relu(self.conv2(dummy))
+            dummy = F.max_pool1d(dummy, 2)
+            self.flatten_size = dummy.view(-1).shape[0]
+
+        self.fc = nn.Sequential(
+            nn.Linear(self.flatten_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU()
+        )
+
+        self.classifier = nn.Sequential(
             nn.Linear(64, 8),
             nn.Tanh(),
             nn.Linear(8, 1),
-            nn.Sigmoid())
-
-        self.encoder = nn.Sequential(
-            nn.Conv1d(in_channels=1, out_channels=32,
-                      kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2),
-            nn.Conv1d(in_channels=32, out_channels=64,
-                      kernel_size=2, stride=1, padding=0),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2),
-            nn.Flatten(),
-            nn.Linear(64 * 124, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-        )
-
-        self.decoder = nn.Sequential(
-            nn.Linear(64, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64 * 124),
-            nn.ReLU(),
-            nn.Unflatten(1, (64, 124)),
-            nn.ConvTranspose1d(in_channels=64, out_channels=32,
-                               kernel_size=5, stride=2,
-                               padding=1, output_padding=1),
-            nn.ReLU(),
-
-            nn.ConvTranspose1d(in_channels=32, out_channels=1,
-                               kernel_size=5, stride=2,
-                               padding=2, output_padding=1),
-            # nn.Sigmoid()
+            nn.Sigmoid()
         )
 
     def forward(self, x):
-        # Проверяем, что входные данные имеют правильную форму
         if x.dim() not in [2, 3]:
-            raise ValueError(f"Ожидаемый вход: (batch_size, 500) или (batch_size, 1, 500). Получено: {x.shape}")
+            raise ValueError(
+                f"Ожидаемый вход: (batch_size, {self.input_size}) или (batch_size, 1, {self.input_size}). Получено: {x.shape}")
 
-        x = x.unsqueeze(1)
-        encoded = self.encoder(x)
-        sigm = self.sigm(encoded)
+        if x.dim() == 2:
+            x = x.unsqueeze(1)
 
-        return sigm
+        x = F.relu(self.conv1(x))
+        x = F.max_pool1d(x, 2)
+        x = self.dropout_layer(x)
+
+        x = F.relu(self.conv2(x))
+        x = F.max_pool1d(x, 2)
+        x = self.dropout_layer(x)
+
+        x = x.view(-1, self.flatten_size)
+        x = self.fc(x)
+        output = self.classifier(x)
+
+        return output
+
+    def get_info(self):
+        return self.F1, self.mean_err, self.input_size, self.POINT_TYPE, self.LEAD_NAME
 
     def get_win_len(self):
-        return 500
+        return self.input_size
 
     def apply(self, signal):
         # Преобразуем сигнал в тензор, если он еще не является тензором
@@ -88,9 +84,8 @@ class CNN(nn.Module):
             raise ValueError(f"Ожидаемый вход: (500,) или (batch_size, 500). Получено: {signal.shape}")
 
         # Проверяем длину сигнала
-        expected_length = 500
-        if signal.size(-1) != expected_length:
-            raise ValueError(f"Ожидаемая длина сигнала: {expected_length}. Получено: {signal.size(-1)}")
+        if signal.size(-1) != self.input_size:
+            raise ValueError(f"Ожидаемая длина сигнала: {self.input_size}. Получено: {signal.size(-1)}")
 
         # Добавляем измерение батча, если его нет
         if signal.dim() == 1:
@@ -107,66 +102,53 @@ class CNN(nn.Module):
         self.POINT_TYPE = POINT_TYPE
         self.LEAD_NAME = LEAD_NAME
 
-    def get_info(self):
-        return self.F1, self.mean_err, self.input_size, self.POINT_TYPE, self.LEAD_NAME
 
-def save_model(binary_dataset, POINT_TYPE, LEAD_NAME):
+def save_model(binary_dataset, POINT_TYPE, LEAD_NAME, epochs):
     signals_train, labels_train = binary_dataset.get_train()
-    class1 = torch.from_numpy(signals_train[labels_train == 1]).float()
-    class2 = torch.from_numpy(signals_train[labels_train == 0]).float()
 
-    train_loader = DataLoader(class1, batch_size=50, shuffle=False)
-    train_loader_2 = DataLoader(class2, batch_size=50, shuffle=False)
+    # Применяем RandomOverSampler для балансировки
+    oversampler = RandomOverSampler()
+    signals_reshaped = signals_train.reshape(len(signals_train), -1)
+    signals_resampled, labels_resampled = oversampler.fit_resample(signals_reshaped, labels_train)
 
-    model = CNN()
+    # Возвращаем обратно в исходную форму
+    signals_resampled = signals_resampled.reshape(-1, *signals_train.shape[1:])
 
+    # Преобразуем в тензоры PyTorch
+    signals_tensor = torch.from_numpy(signals_resampled).float()
+    labels_tensor = torch.from_numpy(labels_resampled).float().unsqueeze(1)
+
+    # Создаем единый DataLoader
+    dataset = TensorDataset(signals_tensor, labels_tensor)
+    train_loader = DataLoader(dataset, batch_size=50, shuffle=True)
+
+    model = CNN(16, 64, 7, 3, 0.3, 300)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
+    criterion = nn.BCELoss()
 
-    criterion = nn.MSELoss()
+    losses = []
 
-    losses1 = []
-    losses2 = []
-
-    num_epoch = 100
+    num_epoch = epochs
     # Обучение
     model.train()
     for epoch in range(num_epoch):
-        for i, (data_batch_1, data_batch_2) in enumerate(zip(train_loader, train_loader_2)):
+        epoch_loss = 0.0
+        for signals, labels in train_loader:
             optimizer.zero_grad()
-            # Обучаем модель на батче из train_loader
-            sigm_1 = model(data_batch_1)
-
-            target1 = torch.ones(data_batch_1.shape[0], 1)
-            loss_sigm_1 = criterion(sigm_1, target1)
-            loss_sigm_1.backward()
-
-            # Обучаем модель на батче из train_loader_2
-            sigm_2 = model(data_batch_2)
-            target2 = torch.zeros(data_batch_2.shape[0], 1)
-            loss_sigm_2 = criterion(sigm_2, target2)
-            loss_sigm_2.backward()
-
+            outputs = model(signals)
+            loss = criterion(outputs, labels)
+            loss.backward()
             optimizer.step()
+            epoch_loss += loss.item()
 
-        print(f"Epoch [{epoch}/{num_epoch}] Loss binary vote: {loss_sigm_1.item():.3f}, {loss_sigm_2.item():.3f}")
-        losses1.append(loss_sigm_1.item())
-        losses2.append(loss_sigm_2.item())
+        avg_loss = epoch_loss / len(train_loader)
+        losses.append(avg_loss)
+        print(f"Epoch [{epoch + 1}/{epochs}] Loss: {avg_loss:.3f}")
     model.eval()
 
-    # Откроем датасет LUDB
-    path_to_dataset = Path(PATH_TO_LUDB)
-    with open(path_to_dataset, 'r') as file:
-        LUDB_data = json.load(file)
-
-    # train_id, test_id = get_test_and_train_ids(LUDB_data)
-    # test_signals = []
-    # true_delinations = []
-    # for id in test_id:
-    #     test_signals.append(get_signal_by_id_and_lead_mkV(id, LEAD_NAME, LUDB_data))
-    #     true_delinations.append([int(500*i) for i in get_one_lead_delineation_by_patient_id(id, LUDB_data, LEAD_NAME, POINT_TYPE)])
     F1, mean_err = get_F1_of_one_CNN(model, binary_dataset.get_test()[0], binary_dataset.get_test()[1], threshold=0.8)
     model.add_info(F1, mean_err, POINT_TYPE, LEAD_NAME)
 
     timestamp = datetime.now().strftime("%m%d_%H%M%S")
-    os.makedirs("SAVED_NETS", exist_ok=True)
-    torch.save(model, f"SAVED_NETS/{binary_dataset.get_name()}_{timestamp}.pth")
+    os.makedirs(f"{SAVED_NETS_PATH}", exist_ok=True)
+    torch.save(model, f"{SAVED_NETS_PATH}/{binary_dataset.get_name()}_{epochs}_16-64_{timestamp}.pth")

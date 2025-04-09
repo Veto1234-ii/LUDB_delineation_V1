@@ -39,6 +39,7 @@ class GUI_DelineationComparison:
             figsize=(15, 10)
         )
         self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
+        self.legend = None  # Будем хранить ссылку на легенду
         self.update_plot()
 
     def _plot_delineation(self, ax, signal, points, lead_name, is_true_delineation=True):
@@ -75,30 +76,51 @@ class GUI_DelineationComparison:
 
     def update_plot(self):
         patient = self.patient_containers[self.current_patient_index]
-
+        
+        # Удаляем предыдущую легенду, если она существует
+        if self.legend is not None:
+            self.legend.remove()
+            self.legend = None
+            
+        # Собираем все уникальные элементы для легенды
+        all_handles = []
+        all_labels = []
+        
         for i, (lead_name, signal) in enumerate(zip(patient.leads_names_list, patient.signals_list_mV)):
             self.ax[i].clear()
-
             plot_lead_signal_to_ax(signal_mV=signal, ax=self.ax[i])
 
             # Передаем текущее имя отведения в метод отрисовки
             self._plot_delineation(self.ax[i], signal, patient.true_delinations, lead_name, is_true_delineation=True)
             self._plot_delineation(self.ax[i], signal, patient.our_delineations, lead_name, is_true_delineation=False)
-
-            handles, labels = self.ax[i].get_legend_handles_labels()
-            unique_labels = dict(zip(labels, handles))
-            self.ax[i].legend(
-                unique_labels.values(),
-                unique_labels.keys(),
-                loc='upper right'
-            )
+            
             self.ax[i].set_title(f'Patient {patient.patient_id}, Lead {lead_name}')
+            
+            # Получаем текущие handles и labels, но не создаем легенду здесь
+            handles, labels = self.ax[i].get_legend_handles_labels()
+            all_handles.extend(handles)
+            all_labels.extend(labels)
+        
+        # Убираем дубликаты в легенде
+        unique = dict(zip(all_labels, all_handles))
+        
+        # Создаем одну общую легенду для всей фигуры
+        if unique:  # только если есть что отображать
+            self.legend = self.fig.legend(
+                unique.values(),
+                unique.keys(),
+                loc='upper right',
+                bbox_to_anchor=(1.0, 1.0),
+                borderaxespad=0.5,
+                ncol=2,
+                fontsize='small',
+                framealpha=0.9
+            )
 
         plt.tight_layout()
         plt.draw()
 
     def on_key_press(self, event):
-
         # обработка нажатий клавиш для листания пациентов
         if event.key == 'right':
             self.current_patient_index = (self.current_patient_index + 1) % len(self.patient_containers)
@@ -108,7 +130,6 @@ class GUI_DelineationComparison:
             self.update_plot()
 
 if __name__ == "__main__":
-
     # загрузка данных LUDB
     LUDB_data = get_LUDB_data()
     test_patient_ids, _ = get_test_and_train_ids(LUDB_data)
