@@ -313,14 +313,25 @@ class Deciser_leads:
         
         for i in range(len(result_delineation_qrs_i) - 1):
             
+            # I отведение
             r_start_i = result_delineation_qrs_i[i]
-            r_start_ii = result_delineation_qrs_ii[i]
-            r_start_iii = result_delineation_qrs_iii[i]
-
-            
             r_end_i = result_delineation_qrs_i[i + 1]
-            r_end_ii = result_delineation_qrs_ii[i + 1]
-            r_end_iii = result_delineation_qrs_iii[i + 1]
+            
+            # II отведение
+            if i >= len(result_delineation_qrs_ii):
+                r_start_ii = r_start_i
+                r_end_ii = r_end_i
+            else:
+                r_start_ii = result_delineation_qrs_ii[i]
+                r_end_ii = result_delineation_qrs_ii[i + 1] if (i + 1) < len(result_delineation_qrs_ii) else r_end_i
+            
+            # III отведение
+            if i >= len(result_delineation_qrs_iii):
+                r_start_iii = r_start_i
+                r_end_iii = r_end_i
+            else:
+                r_start_iii = result_delineation_qrs_iii[i]
+                r_end_iii = result_delineation_qrs_iii[i + 1] if (i + 1) < len(result_delineation_qrs_iii) else r_end_i
 
             
             # Расстановка точек P_PEAK между двумя соседними точками QRS_PEAK
