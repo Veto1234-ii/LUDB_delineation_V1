@@ -313,15 +313,22 @@ class Deciser_leads:
         
         for i in range(len(result_delineation_qrs_i) - 1):
             
-            r_start = result_delineation_qrs_i[i]
-            r_end = result_delineation_qrs_i[i + 1]
+            r_start_i = result_delineation_qrs_i[i]
+            r_start_ii = result_delineation_qrs_ii[i]
+            r_start_iii = result_delineation_qrs_iii[i]
+
+            
+            r_end_i = result_delineation_qrs_i[i + 1]
+            r_end_ii = result_delineation_qrs_ii[i + 1]
+            r_end_iii = result_delineation_qrs_iii[i + 1]
+
             
             # Расстановка точек P_PEAK между двумя соседними точками QRS_PEAK
             
             # Получение кандидатов в трех отведениях
-            candidates_p_i = [coord for coord in self.delineation_i_p if coord > r_start and coord < r_end]
-            candidates_p_ii = [coord for coord in self.delineation_ii_p if coord > r_start and coord < r_end]
-            candidates_p_iii = [coord for coord in self.delineation_iii_p if coord > r_start and coord < r_end]
+            candidates_p_i = [coord for coord in self.delineation_i_p if coord > r_start_i and coord < r_end_i]
+            candidates_p_ii = [coord for coord in self.delineation_ii_p if coord > r_start_ii and coord < r_end_ii]
+            candidates_p_iii = [coord for coord in self.delineation_iii_p if coord > r_start_iii and coord < r_end_iii]
             
             # Составление всевозможных кобинаций точек 
             groups_p = self.generate_valid_point_groups(candidates_p_i, candidates_p_ii, candidates_p_iii)
@@ -330,7 +337,7 @@ class Deciser_leads:
             best_group_p = self.select_best_group(groups_p)
             
             if best_group_p is None:
-                full_group_p = [r_end, r_end, r_end]
+                full_group_p = [r_end_i, r_end_ii, r_end_iii]
                 
             else:
                 # Хотя бы одна точка стоит
@@ -352,9 +359,9 @@ class Deciser_leads:
             # Расстановка точек T_PEAK между P_PEAK и следующей точкой QRS_PEAK
             
             # Получение кандидатов в трех отведениях
-            candidates_t_i = [coord for coord in self.delineation_i_t if coord > r_start and coord < full_group_p[0]]
-            candidates_t_ii = [coord for coord in self.delineation_ii_t if coord > r_start and coord < full_group_p[1]]
-            candidates_t_iii = [coord for coord in self.delineation_iii_t if coord > r_start and coord < full_group_p[2]]
+            candidates_t_i = [coord for coord in self.delineation_i_t if coord > r_start_i and coord < full_group_p[0]]
+            candidates_t_ii = [coord for coord in self.delineation_ii_t if coord > r_start_ii and coord < full_group_p[1]]
+            candidates_t_iii = [coord for coord in self.delineation_iii_t if coord > r_start_iii and coord < full_group_p[2]]
             
             # Составление всевозможных кобинаций точек 
             groups_t = self.generate_valid_point_groups(candidates_t_i, candidates_t_ii, candidates_t_iii)
