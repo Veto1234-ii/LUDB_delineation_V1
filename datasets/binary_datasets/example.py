@@ -35,3 +35,15 @@ if __name__ == "__main__":
 
     # Листаем его в UI с визуализацией картинок
     binary_dataset_visualizator = UIBinaryDataset(binary_dataset)
+
+
+    bin_datset_with_nigative = create_dataset_from_scratch(point_name=POINTS_TYPES.T_PEAK,
+                                                 radius=200,
+                                                 lead_name=LEADS_NAMES.ii,
+                                                 LUDB_dataset=LUDB_dataset,
+                                                 dataset_size=50
+                                                )
+
+    bin_datset_with_nigative.add_negative_examples(-20, 100, LUDB_dataset)
+
+    bin_datset_with_nigative_visual = UIBinaryDataset(bin_datset_with_nigative)

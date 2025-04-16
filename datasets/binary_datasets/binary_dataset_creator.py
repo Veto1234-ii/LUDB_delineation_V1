@@ -74,7 +74,10 @@ def create_dataset_from_scratch(point_name, radius, lead_name, LUDB_dataset, dat
         labels_train=np.array(labels_train),
         labels_test=labels_test,
         full_signals=np.array(full_signals),
-        delineation_on_full_signals=np.array(delineation_on_full_signals)
+        delineation_on_full_signals=np.array(delineation_on_full_signals),
+        lead_name = lead_name,
+        point_name = point_name,
+        radius = radius
     )
 
     binary_dataset.shuffle()
