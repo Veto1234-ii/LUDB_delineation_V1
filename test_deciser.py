@@ -2,7 +2,7 @@ from decision_maker import Deciser, Scene, DelineationPoint
 from datasets import get_test_and_train_ids, get_LUDB_data, get_signals_by_id_several_leads_mkV, \
     get_one_lead_delineation_by_patient_id
 from settings import LEADS_NAMES_ORDERED, LEADS_NAMES, POINTS_TYPES, MAX_SIGNAL_LEN, FREQUENCY, TOLERANCE, POINTS_TYPES_STR_NAMES
-from decision_maker import Deciser, Scene
+from decision_maker import Deciser, Deciser_leads, Scene
 from delineation import get_F1
 
 import sys
@@ -217,9 +217,9 @@ if __name__ == "__main__":
 
     LUDB_data = get_LUDB_data()
     test_patients_ids, train_patients_ids = get_test_and_train_ids(LUDB_data)
-    deciser = Deciser()
+    deciser = Deciser_leads()
     leads_names = [LEADS_NAMES.i, LEADS_NAMES.ii, LEADS_NAMES.iii]
-    tester = MainMetricsTester(train_patients_ids[10:20], LUDB_data, deciser=deciser, leads_names=leads_names)
+    tester = MainMetricsTester(train_patients_ids, LUDB_data, deciser=deciser, leads_names=leads_names)
 
     # Получаем объект отчета о тестировани, содержаший посчитаннные метрики
     # качества нашего алгоритма на данном тестовом множестве пациента:

@@ -420,7 +420,7 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
     
     train_ids, test_ids = get_test_and_train_ids(LUDB_data)
-    patient_id  = test_ids[55]
+    patient_id  = test_ids[15]
     
     print(patient_id)
     # 15
