@@ -20,59 +20,41 @@ class Deciser_leads:
         self.scene = Scene() # Пустая сцена
         self.history = SceneHistory() # Пустая история
         
-        # QRS
-        self.cnn_i_qrs = load_best_net(POINTS_TYPES.QRS_PEAK, LEADS_NAMES.i)
-        self.cnn_ii_qrs = load_best_net(POINTS_TYPES.QRS_PEAK, LEADS_NAMES.ii)
-        self.cnn_iii_qrs = load_best_net(POINTS_TYPES.QRS_PEAK, LEADS_NAMES.iii)
-
-        # P
-        self.cnn_i_p = load_best_net(POINTS_TYPES.P_PEAK, LEADS_NAMES.i)
-        # self.cnn_ii_p = get_appliable("BinaryDataset_10000_ii_P_PEAK_250_0320_191832")
-        self.cnn_ii_p = load_best_net(POINTS_TYPES.P_PEAK, LEADS_NAMES.ii)
-        self.cnn_iii_p = load_best_net(POINTS_TYPES.P_PEAK, LEADS_NAMES.iii)
-
-        # T
-        self.cnn_i_t = load_best_net(POINTS_TYPES.T_PEAK, LEADS_NAMES.i)
-        self.cnn_ii_t = load_best_net(POINTS_TYPES.T_PEAK, LEADS_NAMES.ii)
-        self.cnn_iii_t = load_best_net(POINTS_TYPES.T_PEAK, LEADS_NAMES.iii)
-        
+             
         self.time_s = [i/FREQUENCY for i in range(5000)]
         
-        
-        self.activations_i_qrs = None
-        self.activations_ii_qrs = None
-        self.activations_iii_qrs = None
 
-        
-        self.delineation_i_qrs, self.delin_weights_i_qrs = None, None
-        self.delineation_ii_qrs, self.delin_weights_ii_qrs = None, None
-        self.delineation_iii_qrs, self.delin_weights_iii_qrs = None, None
-
-        # P
-        self.activations_i_p = None
-        self.activations_ii_p = None
-        self.activations_iii_p = None
-        
-        self.delineation_i_p, self.delin_weights_i_p = None, None
-        self.delineation_ii_p, self.delin_weights_ii_p = None, None
-        self.delineation_iii_p, self.delin_weights_iii_p = None, None
-        
-        # T
-        self.activations_i_t = None
-        self.activations_ii_t = None
-        self.activations_iii_t = None
-        
-        self.delineation_i_t, self.delin_weights_i_t = None, None
-        self.delineation_ii_t, self.delin_weights_ii_t = None, None
-        self.delineation_iii_t, self.delin_weights_iii_t = None, None        
-        
-        
-
-        
         self.radius_evidence = 20
-        self.threshold_evidence_qrs = 0.7
-        self.threshold_evidence_p = 0.2
-        self.threshold_evidence_t = 0.2
+        self.threshold_evidence_QRS_PEAK = 0.7
+        
+        
+        self.Coordinates_points_from_R_to_R = {}
+    
+        wave_types = [WAVES_TYPES.QRS, WAVES_TYPES.P, WAVES_TYPES.T]
+        sub_types = ['_start', '_peak', '_end']
+        
+        for lead in [LEADS_NAMES.i, LEADS_NAMES.ii, LEADS_NAMES.iii]:
+            self.Coordinates_points_from_R_to_R[lead] = {}
+            
+            for wave in wave_types:
+                for sub in sub_types:
+                    key = f"{wave}{sub}".upper()
+                    self.Coordinates_points_from_R_to_R[lead][key] = None
+     
+        self.Types_points = {}
+        
+        for wave in wave_types:
+            self.Types_points[wave] = [f"{wave}{sub}".upper() for sub in sub_types]
+        
+    
+        for lead in self.Coordinates_points_from_R_to_R.keys():
+                        
+            for type_point in self.Coordinates_points_from_R_to_R[lead].keys():
+                
+                net = load_best_net(getattr(POINTS_TYPES, type_point), lead)
+                
+                setattr(self, f"cnn_{lead}_{type_point}", net)
+            
 
         
     def clear_scene(self):
@@ -80,7 +62,10 @@ class Deciser_leads:
         self.history.visibles_groups.clear()
         self.history.invisibles_groups.clear()
 
-        
+    def clear_coordinates(self):
+        for lead, types_points in self.Coordinates_points_from_R_to_R.items():
+            for type_point in types_points.keys():
+                types_points[type_point] = None
         
     def what_points_we_want(self):
         return {LEADS_NAMES.i: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK],
@@ -89,34 +74,27 @@ class Deciser_leads:
                 }
     
     def get_delineation_and_weights_qrs_p_t(self, threshold):
+                
         
-        # QRS
-        self.activations_i_qrs = get_activations_of_CNN_on_signal(self.cnn_i_qrs, self.signals[0])
-        self.activations_ii_qrs = get_activations_of_CNN_on_signal(self.cnn_ii_qrs, self.signals[1])
-        self.activations_iii_qrs = get_activations_of_CNN_on_signal(self.cnn_iii_qrs, self.signals[2])
+        for i, lead in enumerate(self.Coordinates_points_from_R_to_R.keys()):
+                        
+            for type_point in self.Coordinates_points_from_R_to_R[lead].keys():
+                
+                net = getattr(self, f"cnn_{lead}_{type_point}")
+                
+                activations = get_activations_of_CNN_on_signal(net, self.signals[i])
+                
+                if type_point == self.Types_points[WAVES_TYPES.QRS][1]:
+                    is_QRS_PEAK = True
+                else:
+                    is_QRS_PEAK = False
+                
+                delineation, weight = get_delineation_from_activation_by_extremum_signal(threshold, activations, self.signals[i], is_QRS_PEAK)
 
-        
-        self.delineation_i_qrs, self.delin_weights_i_qrs = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_i_qrs, self.signals[0], is_QRS_PEAK = True)
-        self.delineation_ii_qrs, self.delin_weights_ii_qrs = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_ii_qrs, self.signals[1], is_QRS_PEAK = True)
-        self.delineation_iii_qrs, self.delin_weights_iii_qrs = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_iii_qrs, self.signals[2], is_QRS_PEAK = True)
+                setattr(self, f"activations_{lead}_{type_point}", activations)
+                setattr(self, f"delineation_{lead}_{type_point}", delineation)
+                setattr(self, f"delin_weights_{lead}_{type_point}", weight)
 
-        # P
-        self.activations_i_p = get_activations_of_CNN_on_signal(self.cnn_i_p, self.signals[0])
-        self.activations_ii_p = get_activations_of_CNN_on_signal(self.cnn_ii_p, self.signals[1])
-        self.activations_iii_p = get_activations_of_CNN_on_signal(self.cnn_iii_p, self.signals[2])
-        
-        self.delineation_i_p, self.delin_weights_i_p = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_i_p, self.signals[0])
-        self.delineation_ii_p, self.delin_weights_ii_p = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_ii_p, self.signals[1])
-        self.delineation_iii_p, self.delin_weights_iii_p = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_iii_p, self.signals[2])
-        
-        # T
-        self.activations_i_t = get_activations_of_CNN_on_signal(self.cnn_i_t, self.signals[0])
-        self.activations_ii_t = get_activations_of_CNN_on_signal(self.cnn_ii_t, self.signals[1])
-        self.activations_iii_t = get_activations_of_CNN_on_signal(self.cnn_iii_t, self.signals[2])
-        
-        self.delineation_i_t, self.delin_weights_i_t = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_i_t, self.signals[0])
-        self.delineation_ii_t, self.delin_weights_ii_t = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_ii_t, self.signals[1])
-        self.delineation_iii_t, self.delin_weights_iii_t = get_delineation_from_activation_by_extremum_signal(threshold, self.activations_iii_t, self.signals[2])
         
     def Calculate_evidence(self, wave_type, main_lead):
         """
@@ -139,7 +117,7 @@ class Deciser_leads:
         candidates = {coord: [weight] for coord, weight in zip(main_delineation, main_weights)}
         
         # Список отведений (кроме основного)
-        other_leads = [lead for lead in [LEADS_NAMES.i, LEADS_NAMES.ii, LEADS_NAMES.iii] if lead != main_lead]
+        other_leads = [lead for lead in self.leads_names if lead != main_lead]
         
         # Ищем согласованные точки в других отведениях
         for lead in other_leads:
@@ -254,17 +232,19 @@ class Deciser_leads:
             # Две недостающие = единственной точке
             return group * 3
     
-    def put_candidates_QRS_Peak(self):
+    def put_QRS_Peak(self):
         
-        result_delineation_qrs_i, result_evidence_qrs_i = self.Calculate_evidence(WAVES_TYPES.QRS, LEADS_NAMES.i)
-        result_delineation_qrs_ii, result_evidence_qrs_ii = self.Calculate_evidence(WAVES_TYPES.QRS, LEADS_NAMES.ii)
-        result_delineation_qrs_iii, result_evidence_qrs_iii = self.Calculate_evidence(WAVES_TYPES.QRS, LEADS_NAMES.iii)
+        qrs_peak = self.Types_points[WAVES_TYPES.QRS][1]
         
-        qrs = {LEADS_NAMES.i:result_delineation_qrs_i , LEADS_NAMES.ii:result_delineation_qrs_ii, LEADS_NAMES.iii:result_delineation_qrs_iii}
+        qrs = {}
+        
+        for lead in self.leads_names:
+            qrs[lead], _ = self.Calculate_evidence(qrs_peak, lead)
         
         for lead, delineation in qrs.items():
             ids_i = []
             for coord in delineation:
+
                 R = DelineationPoint(t=coord/FREQUENCY,
                                           lead_name=lead,
                                           point_type=POINTS_TYPES.QRS_PEAK,
@@ -274,45 +254,93 @@ class Deciser_leads:
                 
             self.history.add_entry(visibles=ids_i)
         
-        return result_delineation_qrs_i, result_delineation_qrs_ii, result_delineation_qrs_iii
+        return qrs[self.leads_names[0]], qrs[self.leads_names[1]], qrs[self.leads_names[2]]
+    
+    def Put_best_group(self, start_idx, end_idx, type_point):
         
-    def run(self, signals,  leads_names):
+        # Получение кандидатов в трех отведениях
         
-        self.signals = signals
-        self.leads_names = leads_names
+        delineation_i = getattr(self, f'delineation_i_{type_point}')
+        delineation_ii = getattr(self, f'delineation_ii_{type_point}')
+        delineation_iii = getattr(self, f'delineation_iii_{type_point}')
 
-        self.get_delineation_and_weights_qrs_p_t(threshold=0.2)
+        
+        candidates_i = [coord for coord in delineation_i if coord > start_idx[0] and coord < end_idx[0]]
+        candidates_ii = [coord for coord in delineation_ii if coord > start_idx[1] and coord < end_idx[1]]
+        candidates_iii = [coord for coord in delineation_iii if coord > start_idx[2] and coord < end_idx[2]]
+        
+        # Составление всевозможных кобинаций точек 
+        groups = self.generate_valid_point_groups(candidates_i, candidates_ii, candidates_iii)
+        
+        # Выбор лучшей комбинации
+        best_group = self.select_best_group(groups)
+        
+        if best_group is not None:
+            
+            # Хотя бы одна точка стоит
+            # Добавление недостающих точек         
+            full_group = self.complete_missing_delineation_points(best_group)     
+            ids = []
+            for i, lead in enumerate(self.leads_names):
+                
+                self.Coordinates_points_from_R_to_R[lead][type_point] = full_group[i]
+
+                delin_point = DelineationPoint(t=full_group[i]/FREQUENCY,
+                                          lead_name=lead,
+                                          point_type=getattr(POINTS_TYPES, type_point),
+                                          sertainty=0.5)
+                
+                id_ = self.scene.add_object(delin_point)
+                ids.append(id_)
+                
+            self.history.add_entry(visibles=ids)
+            
+            
+            
+    def get_start_and_end_idx(self, r_start, r_end, type_point_start, type_point_end, type_point):
+        
+        if self.Coordinates_points_from_R_to_R[self.leads_names[0]][type_point_start] is None:
+            
+             start_idx = r_start
+        else:
+            
+            start_i = self.Coordinates_points_from_R_to_R[self.leads_names[0]][type_point_start] 
+            start_ii = self.Coordinates_points_from_R_to_R[self.leads_names[1]][type_point_start]  
+            start_iii = self.Coordinates_points_from_R_to_R[self.leads_names[2]][type_point_start]
+
+            start_idx = (start_i, start_ii, start_iii)
+             
+             
+         
+        if self.Coordinates_points_from_R_to_R[self.leads_names[0]][type_point_end]  is None:
+             
+             end_idx = r_end
+        else:
+             end_i = self.Coordinates_points_from_R_to_R[self.leads_names[0]][type_point_end] 
+             end_ii = self.Coordinates_points_from_R_to_R[self.leads_names[1]][type_point_end]  
+             end_iii = self.Coordinates_points_from_R_to_R[self.leads_names[2]][type_point_end]
+             
+             end_idx = (end_i, end_ii, end_iii)
+        
+
+        return start_idx, end_idx, type_point  
+        
+        
+    def run(self, signals, leads_names):
+        
+        self.leads_names = leads_names
+        self.signals = signals
+
+        self.get_delineation_and_weights_qrs_p_t(threshold=0.5)
         
         # Расстановка точек QRS_PEAK
-        result_delineation_qrs_i, result_delineation_qrs_ii, result_delineation_qrs_iii = self.put_candidates_QRS_Peak()
-        
-        
-        # Отображение облаков активаций группы волны T
-        # activ_group_t_i = Activations(net_activations=self.activations_i_t,
-        #                     activations_t=self.time_s,
-        #                     color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
-        #                     lead_name=LEADS_NAMES.i)   
-        # id4 = self.scene.add_object(activ_group_t_i)
-        # self.history.add_entry(visibles=[id4])
-        
-        # activ_group_t_ii = Activations(net_activations=self.activations_ii_t,
-        #                     activations_t=self.time_s,
-        #                     color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
-        #                     lead_name=LEADS_NAMES.ii)   
-        # id5 = self.scene.add_object(activ_group_t_ii)
-        # self.history.add_entry(visibles=[id5])
-        
-        # activ_group_t_iii = Activations(net_activations=self.activations_iii_t,
-        #                     activations_t=self.time_s,
-        #                     color=POINTS_TYPES_COLORS[POINTS_TYPES.T_PEAK],
-        #                     lead_name=LEADS_NAMES.iii)   
-        # id6 = self.scene.add_object(activ_group_t_iii)
-        # self.history.add_entry(visibles=[id6])
-        
+        result_delineation_qrs_i, result_delineation_qrs_ii, result_delineation_qrs_iii = self.put_QRS_Peak()      
         
         
         for i in range(len(result_delineation_qrs_i) - 1):
             
+            self.clear_coordinates()
+                        
             # I отведение
             r_start_i = result_delineation_qrs_i[i]
             r_end_i = result_delineation_qrs_i[i + 1]
@@ -333,72 +361,85 @@ class Deciser_leads:
                 r_start_iii = result_delineation_qrs_iii[i]
                 r_end_iii = result_delineation_qrs_iii[i + 1] if (i + 1) < len(result_delineation_qrs_iii) else r_end_i
 
-            
-            # Расстановка точек P_PEAK между двумя соседними точками QRS_PEAK
-            
-            # Получение кандидатов в трех отведениях
-            candidates_p_i = [coord for coord in self.delineation_i_p if coord > r_start_i and coord < r_end_i]
-            candidates_p_ii = [coord for coord in self.delineation_ii_p if coord > r_start_ii and coord < r_end_ii]
-            candidates_p_iii = [coord for coord in self.delineation_iii_p if coord > r_start_iii and coord < r_end_iii]
-            
-            # Составление всевозможных кобинаций точек 
-            groups_p = self.generate_valid_point_groups(candidates_p_i, candidates_p_ii, candidates_p_iii)
-            
-            # Выбор лучшей комбинации
-            best_group_p = self.select_best_group(groups_p)
-            
-            if best_group_p is None:
-                full_group_p = [r_end_i, r_end_ii, r_end_iii]
-                
-            else:
-                # Хотя бы одна точка стоит
-                # Добавление недостающих точек         
-                full_group_p = self.complete_missing_delineation_points(best_group_p)     
-                ids = []
-                for i, lead in enumerate([LEADS_NAMES.i, LEADS_NAMES.ii, LEADS_NAMES.iii]):
-                        
-                    delin_point = DelineationPoint(t=full_group_p[i]/FREQUENCY,
-                                              lead_name=lead,
-                                              point_type=POINTS_TYPES.P_PEAK,
-                                              sertainty=0.5)
-                    
-                    id_ = self.scene.add_object(delin_point)
-                    ids.append(id_)
-                    
-                self.history.add_entry(visibles=ids)
+            qrs_start = self.Types_points[WAVES_TYPES.QRS][0]
+            qrs_end = self.Types_points[WAVES_TYPES.QRS][2]
+            p_start = self.Types_points[WAVES_TYPES.P][0]
+            p_end = self.Types_points[WAVES_TYPES.P][2]
+            p_peak = self.Types_points[WAVES_TYPES.P][1]
+            t_start = self.Types_points[WAVES_TYPES.T][0]
+            t_peak = self.Types_points[WAVES_TYPES.T][1]
+            t_end = self.Types_points[WAVES_TYPES.T][2]
+    
 
-            # Расстановка точек T_PEAK между P_PEAK и следующей точкой QRS_PEAK
+            # QRS_START
+            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
+                                r_end = (r_end_i, r_end_ii, r_end_iii),
+                                type_point_start = qrs_start,
+                                type_point_end = qrs_start,
+                                type_point = qrs_start)
             
-            # Получение кандидатов в трех отведениях
-            candidates_t_i = [coord for coord in self.delineation_i_t if coord > r_start_i and coord < full_group_p[0]]
-            candidates_t_ii = [coord for coord in self.delineation_ii_t if coord > r_start_ii and coord < full_group_p[1]]
-            candidates_t_iii = [coord for coord in self.delineation_iii_t if coord > r_start_iii and coord < full_group_p[2]]
+            self.Put_best_group(start_idx, end_idx, type_point)
             
-            # Составление всевозможных кобинаций точек 
-            groups_t = self.generate_valid_point_groups(candidates_t_i, candidates_t_ii, candidates_t_iii)
+            # QRS_END
+            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
+                                r_end = (r_end_i, r_end_ii, r_end_iii),
+                                type_point_start = qrs_end,
+                                type_point_end = qrs_start,
+                                type_point = qrs_end)
+            self.Put_best_group(start_idx, end_idx, type_point)
+
             
-            # Выбор лучшей комбинации
-            best_group_t = self.select_best_group(groups_t)
+            # P_PEAK
+            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
+                                r_end = (r_end_i, r_end_ii, r_end_iii),
+                                type_point_start = qrs_end,
+                                type_point_end = qrs_start,
+                                type_point = p_peak)
+            self.Put_best_group(start_idx, end_idx, type_point)
+
+            # P_START
+            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
+                                r_end = (r_end_i, r_end_ii, r_end_iii),
+                                type_point_start = qrs_end,
+                                type_point_end = p_peak,
+                                type_point = p_start)
+            self.Put_best_group(start_idx, end_idx, type_point)
+
+            # P_END
+            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
+                                r_end = (r_end_i, r_end_ii, r_end_iii),
+                                type_point_start = p_peak,
+                                type_point_end = qrs_start,
+                                type_point = p_end)
+            self.Put_best_group(start_idx, end_idx, type_point)
+
+            # T_PEAK
+            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
+                                r_end = (r_end_i, r_end_ii, r_end_iii),
+                                type_point_start = qrs_end,
+                                type_point_end = p_start,
+                                type_point = t_peak)
+            self.Put_best_group(start_idx, end_idx, type_point)
+
+            # T_START
+            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
+                                r_end = (r_end_i, r_end_ii, r_end_iii),
+                                type_point_start = qrs_end,
+                                type_point_end = t_peak,
+                                type_point = t_start)
+            self.Put_best_group(start_idx, end_idx, type_point)
+
+            # T_END
+            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
+                                r_end = (r_end_i, r_end_ii, r_end_iii),
+                                type_point_start = t_peak,
+                                type_point_end = p_start,
+                                type_point = t_end)
             
+            self.Put_best_group(start_idx, end_idx, type_point)
+
             
-            if best_group_t is not None:
-                # Добавление недостающих точек         
-                full_group_t = self.complete_missing_delineation_points(best_group_t)
-                
-                ids = []
-                for i, lead in enumerate([LEADS_NAMES.i, LEADS_NAMES.ii, LEADS_NAMES.iii]):
-                        
-                    delin_point = DelineationPoint(t=full_group_t[i]/FREQUENCY,
-                                              lead_name=lead,
-                                              point_type=POINTS_TYPES.T_PEAK,
-                                              sertainty=0.5)
-                    
-                    id_ = self.scene.add_object(delin_point)
-                    ids.append(id_)
-                    
-                self.history.add_entry(visibles=ids)
-                
-  
+
         return self.scene, self.history
     
 if __name__ == "__main__":
@@ -420,10 +461,10 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
     
     train_ids, test_ids = get_test_and_train_ids(LUDB_data)
-    patient_id  = test_ids[55]
+    patient_id  = test_ids[12]
     
     print(patient_id)
-    # 15
+    # 55
     # 4
     # 12
 
@@ -433,7 +474,7 @@ if __name__ == "__main__":
 
 
     deciser = Deciser_leads()
-    scene, scene_history = deciser.run(signals=signals_list_mkV,  leads_names=leads_names_list_mkV)
+    scene, scene_history = deciser.run(signals=signals_list_mkV, leads_names=leads_names_list_mkV)
     
     # scene, scene_history = create_test_scene_and_history() # их надо взять из отработавшего Deciser
     ui = UI_MainForm(leads_names=leads_names_list_mV, signals=signals_list_mV, scene=scene, scene_history=scene_history)
@@ -444,4 +485,6 @@ if __name__ == "__main__":
         
         
         
+
+
 
