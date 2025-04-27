@@ -27,7 +27,7 @@ def load_best_net(point_type, lead_name):
                 metric = metrics['F1_seq']
                 if point_type_ == point_type and lead_name_ == lead_name:
                     if metric > F1_max:
-                        F1_max = gitmetric
+                        F1_max = metric
                         best_net = model_path
             except Exception as e:
                 print(f"Ошибка при загрузке или применении модели {model_file}: {e}")
