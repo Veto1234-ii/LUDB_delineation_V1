@@ -68,9 +68,9 @@ class Deciser_leads:
                 types_points[type_point] = None
         
     def what_points_we_want(self):
-        return {LEADS_NAMES.i: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK],
-                LEADS_NAMES.ii: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK],
-                LEADS_NAMES.iii: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK]
+        return {LEADS_NAMES.i: [POINTS_TYPES.QRS_PEAK, POINTS_TYPES.QRS_END, POINTS_TYPES.T_START, POINTS_TYPES.T_PEAK, POINTS_TYPES.T_END, POINTS_TYPES.P_START, POINTS_TYPES.P_PEAK, POINTS_TYPES.P_END, POINTS_TYPES.QRS_START],
+                LEADS_NAMES.ii:  [POINTS_TYPES.QRS_PEAK, POINTS_TYPES.QRS_END, POINTS_TYPES.T_START, POINTS_TYPES.T_PEAK, POINTS_TYPES.T_END, POINTS_TYPES.P_START, POINTS_TYPES.P_PEAK, POINTS_TYPES.P_END, POINTS_TYPES.QRS_START],
+                LEADS_NAMES.iii:  [POINTS_TYPES.QRS_PEAK, POINTS_TYPES.QRS_END, POINTS_TYPES.T_START, POINTS_TYPES.T_PEAK, POINTS_TYPES.T_END, POINTS_TYPES.P_START, POINTS_TYPES.P_PEAK, POINTS_TYPES.P_END, POINTS_TYPES.QRS_START]
                 }
     
     def get_delineation_and_weights_qrs_p_t(self, threshold):
@@ -328,6 +328,8 @@ class Deciser_leads:
         
     def run(self, signals, leads_names):
         
+
+        
         self.leads_names = leads_names
         self.signals = signals
 
@@ -461,7 +463,7 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
     
     train_ids, test_ids = get_test_and_train_ids(LUDB_data)
-    patient_id  = test_ids[12]
+    patient_id  = test_ids[55]
     
     print(patient_id)
     # 55
