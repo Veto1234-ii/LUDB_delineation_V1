@@ -3,7 +3,7 @@ from datasets.LUDB_utils import get_LUDB_data, get_test_and_train_ids, get_signa
 from settings import LEADS_NAMES, POINTS_TYPES, POINTS_TYPES_COLORS, FREQUENCY
 from visualisation_utils.plot_one_lead_signal import plot_lead_signal_to_ax
 from delineation import GUI_DelineationComparison, PatientContainer, DelineationOnePoint
-from decision_maker import Deciser
+from decision_maker import Deciser, Deciser_leads
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,11 +42,12 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
 
     # на каких пациентах смотрим работу алгоритма
-    test_patient_ids_all, _ = get_test_and_train_ids(LUDB_data)
-    test_patient_ids = test_patient_ids_all[0:3]
+    _ , test_patient_ids_all = get_test_and_train_ids(LUDB_data)
+    test_patient_ids = test_patient_ids_all[46:50:3]
 
     # экземпляр алгоритма
-    deciser = Deciser()
+    deciser = Deciser_leads()
+       
 
     # сигнал каких отведений показывать
     leads_names = [LEADS_NAMES.i, LEADS_NAMES.ii, LEADS_NAMES.iii]
@@ -64,7 +65,7 @@ if __name__ == "__main__":
             lead_signal = get_signal_by_id_and_lead_mV(patient_id, lead_name, LUDB_data)
             signals_list_mV.append(lead_signal)
 
-        signals_list_mkV = get_signals_by_id_several_leads_mkV(patient_id, LUDB_data, leads_names) # в микровольтах
+        signals_list_mkV, leads_names = get_signals_by_id_several_leads_mkV(patient_id, LUDB_data, leads_names) # в микровольтах
 
         # Подавление вывода (чтобы deciser не мусорил в конксоль всякой отладочной информацией)
         original_stdout = sys.stdout  # Сохраняем оригинальный stdout

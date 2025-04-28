@@ -46,16 +46,17 @@ class Deciser_leads:
         for wave in wave_types:
             self.Types_points[wave] = [f"{wave}{sub}".upper() for sub in sub_types]
         
-    
-        for lead in self.Coordinates_points_from_R_to_R.keys():
+        # Загрузка моделей, исходя из того, какие точки хотим расставаить
+        
+        for lead in self.what_points_we_want().keys():
                         
-            for type_point in self.Coordinates_points_from_R_to_R[lead].keys():
+            for type_point in self.what_points_we_want()[lead]:
                 
-                net = load_best_net(getattr(POINTS_TYPES, type_point), lead)
+      
+                net = load_best_net(type_point, lead)
                 
-                setattr(self, f"cnn_{lead}_{type_point}", net)
-            
-
+                setattr(self, f"cnn_{lead}_{type_point.name}", net)
+                
         
     def clear_scene(self):
         self.scene.scene_objects_dict.clear()
@@ -68,19 +69,23 @@ class Deciser_leads:
                 types_points[type_point] = None
         
     def what_points_we_want(self):
-        return {LEADS_NAMES.i: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK],
-                LEADS_NAMES.ii: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK],
-                LEADS_NAMES.iii: [POINTS_TYPES.P_PEAK, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.T_PEAK]
+        return {LEADS_NAMES.i: [POINTS_TYPES.QRS_PEAK, POINTS_TYPES.P_PEAK],
+                LEADS_NAMES.ii: [POINTS_TYPES.QRS_PEAK, POINTS_TYPES.P_PEAK],
+                LEADS_NAMES.iii:  [POINTS_TYPES.QRS_PEAK, POINTS_TYPES.P_PEAK]
                 }
+    # {LEADS_NAMES.i: [POINTS_TYPES.QRS_START, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.QRS_END, POINTS_TYPES.T_PEAK, POINTS_TYPES.P_PEAK],
+    #         LEADS_NAMES.ii: [POINTS_TYPES.QRS_START, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.QRS_END, POINTS_TYPES.T_PEAK, POINTS_TYPES.P_PEAK],
+    #         LEADS_NAMES.iii:  [POINTS_TYPES.QRS_START, POINTS_TYPES.QRS_PEAK, POINTS_TYPES.QRS_END, POINTS_TYPES.T_PEAK, POINTS_TYPES.P_PEAK]
+    #         }
     
     def get_delineation_and_weights_qrs_p_t(self, threshold):
                 
         
-        for i, lead in enumerate(self.Coordinates_points_from_R_to_R.keys()):
+        for i, lead in enumerate(self.what_points_we_want().keys()):
                         
-            for type_point in self.Coordinates_points_from_R_to_R[lead].keys():
+            for type_point in self.what_points_we_want()[lead]:
                 
-                net = getattr(self, f"cnn_{lead}_{type_point}")
+                net = getattr(self, f"cnn_{lead}_{type_point.name}")
                 
                 activations = get_activations_of_CNN_on_signal(net, self.signals[i])
                 
@@ -90,10 +95,9 @@ class Deciser_leads:
                     is_QRS_PEAK = False
                 
                 delineation, weight = get_delineation_from_activation_by_extremum_signal(threshold, activations, self.signals[i], is_QRS_PEAK)
-
-                setattr(self, f"activations_{lead}_{type_point}", activations)
-                setattr(self, f"delineation_{lead}_{type_point}", delineation)
-                setattr(self, f"delin_weights_{lead}_{type_point}", weight)
+                setattr(self, f"activations_{lead}_{type_point.name}", activations)
+                setattr(self, f"delineation_{lead}_{type_point.name}", delineation)
+                setattr(self, f"delin_weights_{lead}_{type_point.name}", weight)
 
         
     def Calculate_evidence(self, wave_type, main_lead):
@@ -252,7 +256,7 @@ class Deciser_leads:
                 id_ = self.scene.add_object(R)
                 ids_i.append(id_)
                 
-            self.history.add_entry(visibles=ids_i)
+            # self.history.add_entry(visibles=ids_i)
         
         return qrs[self.leads_names[0]], qrs[self.leads_names[1]], qrs[self.leads_names[2]]
     
@@ -293,7 +297,8 @@ class Deciser_leads:
                 id_ = self.scene.add_object(delin_point)
                 ids.append(id_)
                 
-            self.history.add_entry(visibles=ids)
+            # self.history.add_entry(visibles=ids)
+            return ids
             
             
             
@@ -325,8 +330,41 @@ class Deciser_leads:
 
         return start_idx, end_idx, type_point  
         
+    def cloud_activation(self, type_point):
+        # Отображение облаков активаций волны T 
+        activations_i = getattr(self, f'activations_i_{type_point.name}')
+        activations_ii = getattr(self, f'activations_ii_{type_point.name}')
+        activations_iii = getattr(self, f'activations_iii_{type_point.name}')
+
+        
+        activ_group_t_i = Activations(net_activations=activations_i,
+                            activations_t=self.time_s,
+                            color=POINTS_TYPES_COLORS[type_point],
+                            lead_name=LEADS_NAMES.i)   
+        id4 = self.scene.add_object(activ_group_t_i)
+    
+    
+        activ_group_t_ii = Activations(net_activations=activations_ii,
+                            activations_t=self.time_s,
+                            color=POINTS_TYPES_COLORS[type_point],
+                            lead_name=LEADS_NAMES.ii)   
+        id5 = self.scene.add_object(activ_group_t_ii)
+    
+    
+        activ_group_t_iii = Activations(net_activations=activations_iii,
+                            activations_t=self.time_s,
+                            color=POINTS_TYPES_COLORS[type_point],
+                            lead_name=LEADS_NAMES.iii)   
+        id6 = self.scene.add_object(activ_group_t_iii)
+        
+        self.history.add_entry(visibles=[id4, id5, id6])
+        
+        # self.history.add_entry(invisibles=[id4, id5, id6])
+
         
     def run(self, signals, leads_names):
+        
+
         
         self.leads_names = leads_names
         self.signals = signals
@@ -336,6 +374,9 @@ class Deciser_leads:
         # Расстановка точек QRS_PEAK
         result_delineation_qrs_i, result_delineation_qrs_ii, result_delineation_qrs_iii = self.put_QRS_Peak()      
         
+        self.cloud_activation(POINTS_TYPES.P_PEAK)
+        
+        idss = []
         
         for i in range(len(result_delineation_qrs_i) - 1):
             
@@ -363,12 +404,10 @@ class Deciser_leads:
 
             qrs_start = self.Types_points[WAVES_TYPES.QRS][0]
             qrs_end = self.Types_points[WAVES_TYPES.QRS][2]
-            p_start = self.Types_points[WAVES_TYPES.P][0]
-            p_end = self.Types_points[WAVES_TYPES.P][2]
+            
             p_peak = self.Types_points[WAVES_TYPES.P][1]
-            t_start = self.Types_points[WAVES_TYPES.T][0]
+            
             t_peak = self.Types_points[WAVES_TYPES.T][1]
-            t_end = self.Types_points[WAVES_TYPES.T][2]
     
 
             # QRS_START
@@ -376,67 +415,40 @@ class Deciser_leads:
                                 r_end = (r_end_i, r_end_ii, r_end_iii),
                                 type_point_start = qrs_start,
                                 type_point_end = qrs_start,
-                                type_point = qrs_start)
-            
-            self.Put_best_group(start_idx, end_idx, type_point)
-            
-            # QRS_END
-            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
-                                r_end = (r_end_i, r_end_ii, r_end_iii),
-                                type_point_start = qrs_end,
-                                type_point_end = qrs_start,
-                                type_point = qrs_end)
-            self.Put_best_group(start_idx, end_idx, type_point)
-
-            
-            # P_PEAK
-            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
-                                r_end = (r_end_i, r_end_ii, r_end_iii),
-                                type_point_start = qrs_end,
-                                type_point_end = qrs_start,
                                 type_point = p_peak)
-            self.Put_best_group(start_idx, end_idx, type_point)
-
-            # P_START
-            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
-                                r_end = (r_end_i, r_end_ii, r_end_iii),
-                                type_point_start = qrs_end,
-                                type_point_end = p_peak,
-                                type_point = p_start)
-            self.Put_best_group(start_idx, end_idx, type_point)
-
-            # P_END
-            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
-                                r_end = (r_end_i, r_end_ii, r_end_iii),
-                                type_point_start = p_peak,
-                                type_point_end = qrs_start,
-                                type_point = p_end)
-            self.Put_best_group(start_idx, end_idx, type_point)
-
-            # T_PEAK
-            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
-                                r_end = (r_end_i, r_end_ii, r_end_iii),
-                                type_point_start = qrs_end,
-                                type_point_end = p_start,
-                                type_point = t_peak)
-            self.Put_best_group(start_idx, end_idx, type_point)
-
-            # T_START
-            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
-                                r_end = (r_end_i, r_end_ii, r_end_iii),
-                                type_point_start = qrs_end,
-                                type_point_end = t_peak,
-                                type_point = t_start)
-            self.Put_best_group(start_idx, end_idx, type_point)
-
-            # T_END
-            start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
-                                r_end = (r_end_i, r_end_ii, r_end_iii),
-                                type_point_start = t_peak,
-                                type_point_end = p_start,
-                                type_point = t_end)
             
-            self.Put_best_group(start_idx, end_idx, type_point)
+            ids = self.Put_best_group(start_idx, end_idx, type_point)
+            for i in ids:
+                idss.append(i)
+            # # QRS_END
+            # start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
+            #                     r_end = (r_end_i, r_end_ii, r_end_iii),
+            #                     type_point_start = qrs_end,
+            #                     type_point_end = qrs_start,
+            #                     type_point = qrs_end)
+            # self.Put_best_group(start_idx, end_idx, type_point)
+
+            
+            # # P_PEAK
+            # start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
+            #                     r_end = (r_end_i, r_end_ii, r_end_iii),
+            #                     type_point_start = qrs_end,
+            #                     type_point_end = qrs_start,
+            #                     type_point = p_peak)
+            # self.Put_best_group(start_idx, end_idx, type_point)
+
+            
+
+            # # T_PEAK
+            # start_idx, end_idx, type_point  = self.get_start_and_end_idx(r_start = (r_start_i, r_start_ii, r_start_iii),
+            #                     r_end = (r_end_i, r_end_ii, r_end_iii),
+            #                     type_point_start = qrs_end,
+            #                     type_point_end = p_peak,
+            #                     type_point = t_peak)
+            # self.Put_best_group(start_idx, end_idx, type_point)
+
+           
+        self.history.add_entry(visibles=idss)
 
             
 
@@ -461,23 +473,29 @@ if __name__ == "__main__":
     LUDB_data = get_LUDB_data()
     
     train_ids, test_ids = get_test_and_train_ids(LUDB_data)
-    patient_id  = test_ids[12]
     
-    print(patient_id)
+    # print(patient_id)
     # 55
     # 4
     # 12
-
-    
-    signals_list_mV, leads_names_list_mV = get_signals_by_id_several_leads_mV(patient_id=patient_id, LUDB_data=LUDB_data,leads_names_list=leads_names)
-    signals_list_mkV, leads_names_list_mkV = get_signals_by_id_several_leads_mkV(patient_id=patient_id, LUDB_data=LUDB_data,leads_names_list=leads_names)
-
-
     deciser = Deciser_leads()
-    scene, scene_history = deciser.run(signals=signals_list_mkV, leads_names=leads_names_list_mkV)
+
+
+    for i in range(28, 50, 3):
+        patient_id  = test_ids[i]
+        
+        signals_list_mV, leads_names_list_mV = get_signals_by_id_several_leads_mV(patient_id=patient_id, LUDB_data=LUDB_data,leads_names_list=leads_names)
+        signals_list_mkV, leads_names_list_mkV = get_signals_by_id_several_leads_mkV(patient_id=patient_id, LUDB_data=LUDB_data,leads_names_list=leads_names)
     
-    # scene, scene_history = create_test_scene_and_history() # их надо взять из отработавшего Deciser
-    ui = UI_MainForm(leads_names=leads_names_list_mV, signals=signals_list_mV, scene=scene, scene_history=scene_history)
+    
+        scene, scene_history = deciser.run(signals=signals_list_mkV, leads_names=leads_names_list_mkV)
+        
+        # scene, scene_history = create_test_scene_and_history() # их надо взять из отработавшего Deciser
+        ui = UI_MainForm(leads_names=leads_names_list_mV, signals=signals_list_mV, scene=scene, scene_history=scene_history)
+        
+        del scene
+        del scene_history
+        deciser.clear_scene()
     
  
 
@@ -485,6 +503,8 @@ if __name__ == "__main__":
         
         
         
+
+
 
 
 
